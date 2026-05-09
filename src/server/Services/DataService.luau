@@ -313,4 +313,17 @@ function DataService.readLeaderboardTop(count: number): { any }
 	return entries
 end
 
+-- ─── Settings_SetUIScale handler (T-092) ─────────────────────────────────────
+
+local _Remotes = require(Shared.Remotes)
+
+_Remotes.Settings_SetUIScale.OnServerEvent:Connect(function(player: Player, payload: any)
+	local scale = payload and payload.scale
+	if type(scale) ~= "number" then return end
+	scale = math.clamp(scale, Constants.UI_SCALE_MIN, Constants.UI_SCALE_MAX)
+	local data = DataService.get(player)
+	if not data then return end
+	data.uiScale = scale
+end)
+
 return DataService

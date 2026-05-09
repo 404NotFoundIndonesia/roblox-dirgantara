@@ -164,7 +164,9 @@ local Remotes = {
 	Ikatan_GiftRequest       = makeEvent("Ikatan_GiftRequest"),
 	-- Payload: { fromUserId: number, itemId: string }
 	Ikatan_GiftNotify_S2C    = makeEvent("Ikatan_GiftNotify_S2C"),
-	-- Payload: { onlinePartnerIds: { number } }
+	-- Payload: { targetUserId: number }
+	Ikatan_RemoveRequest     = makeEvent("Ikatan_RemoveRequest"),
+	-- Payload: { allPartnerIds: { number }, onlinePartnerIds: { number } }
 	Ikatan_PresenceUpdate_S2C = makeEvent("Ikatan_PresenceUpdate_S2C"),
 	-- Payload: { nearbyPartnerIds: { number } }
 	Ikatan_NearbyUpdate_S2C   = makeEvent("Ikatan_NearbyUpdate_S2C"),

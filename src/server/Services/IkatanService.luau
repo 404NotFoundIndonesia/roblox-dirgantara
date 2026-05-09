@@ -464,10 +464,12 @@ function IkatanService.init(player: Player)
 			return
 		end
 
+		local allPartnerIds:    { number } = {}
 		local onlinePartnerIds: { number } = {}
 		for _, partnerIdStr in data.ikatanList do
 			local partnerId = tonumber(partnerIdStr)
 			if partnerId then
+				table.insert(allPartnerIds, partnerId)
 				local presence = getPresence(partnerId)
 				if presence then
 					table.insert(onlinePartnerIds, partnerId)
@@ -477,6 +479,7 @@ function IkatanService.init(player: Player)
 
 		if _players[userId] then
 			Remotes.Ikatan_PresenceUpdate_S2C:FireClient(player, {
+				allPartnerIds    = allPartnerIds,
 				onlinePartnerIds = onlinePartnerIds,
 			})
 		end

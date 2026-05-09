@@ -448,51 +448,51 @@
 
 ## Phase 15 — UI Layer
 
-- [ ] **T-090 · Write `client/Controllers/UIController.luau` — panel manager**  
+- [x] **T-090 · Write `client/Controllers/UIController.luau` — panel manager**  
   Track `activePanel: string?`. `UIController.openPanel(name)`: close current panel, open new one. `UIController.closePanel()`. Panels register themselves on creation. HUD always stays visible regardless of active panel.  
   **Output:** Only one major panel open at a time. Panel open/close is animated (tween fade). HUD never hides behind panels.
 
-- [ ] **T-091 · Write `UIController` — RTL direction system**  
+- [x] **T-091 · Write `UIController` — RTL direction system**  
   On init: read `LocalizationService.RobloxLocaleId`. If `"ar"`: set `UIController.isRTL = true`. Expose `UIController.applyLayout(listLayout)` which sets `HorizontalAlignment` and flips `UIPadding` for RTL. All UI modules call this after creating list layouts.  
   **Output:** Arabic players see fully mirrored horizontal UI. Latin/CJK players see standard LTR layout. Single toggle controls entire UI.
 
-- [ ] **T-092 · Write `UIController` — UI Scale system**  
+- [x] **T-092 · Write `UIController` — UI Scale system**  
   Read `PlayerData.uiScale` preference (0.75–1.5, default 1.0). Apply via `UIScale` instance as child of each `ScreenGui`. Expose settings panel slider that fires `Settings_SetUIScale` remote (add to Remotes). Server saves scale preference to PlayerData.  
   **Output:** UI shrinks/grows proportionally. Change persists across sessions. Works on all screen sizes.
 
-- [ ] **T-093 · Write `client/UI/HUD.luau` — wing charge bar**  
+- [x] **T-093 · Write `client/UI/HUD.luau` — wing charge bar**  
   `ScreenGui` with segment indicators (3–5 segments, count from `Wing_LevelSync_S2C`). Each segment fills/empties based on `Flight_BoostResult_S2C.newCharge`. Animate segment depletion with a brief flash on boost use. Halved-refill visual indicator when in Kegelapan.  
   **Output:** Charge bar reflects accurate charge count. Visual feedback on boost use. Kegelapan state shows dimmed bar.
 
-- [ ] **T-094 · Write `client/UI/HUD.luau` — Cahaya counter**  
+- [x] **T-094 · Write `client/UI/HUD.luau` — Cahaya counter**  
   Show current `cahaya` value from `Cahaya_SyncState_S2C`. Animate number change with tween. Show daily cap indicator (progress bar 0–150) below counter. Glow effect when near cap. RTL: counter moves to top-right.  
   **Output:** Counter accurate after each orb collection. Daily cap progress visible. Correct position per layout direction.
 
-- [ ] **T-095 · Write `client/UI/HUD.luau` — compass + realm name**  
+- [x] **T-095 · Write `client/UI/HUD.luau` — compass + realm name**  
   Top-center label showing localized realm name. Small compass rose that rotates based on camera heading. Hidden in Sky's Peak (replaced by altitude indicator).  
   **Output:** Realm name shown in player's language. Compass rotates correctly. Sky's Peak shows altitude bar instead.
 
-- [ ] **T-096 · Write `client/UI/HUD.luau` — Social Pulse**  
+- [x] **T-096 · Write `client/UI/HUD.luau` — Social Pulse**  
   Bottom-right panel (bottom-left for RTL). Shows avatar icons of Ikatan partners online in same realm (from `Ikatan_PresenceUpdate_S2C`). Tapping an icon shows partner name. Glow pulses when partner is nearby (≤40 studs, provided via `Ikatan_NearbyUpdate_S2C` — add to Remotes).  
   **Output:** Up to 5 partner icons shown. Tap shows name. Glow indicates proximity. RTL: panel on left.
 
-- [ ] **T-097 · Write `client/UI/HUD.luau` — notification toast queue**  
+- [x] **T-097 · Write `client/UI/HUD.luau` — notification toast queue**  
   Toast manager: queue of messages, max 3 visible simultaneously. Each toast: icon + localized message + auto-dismiss after 4 seconds. Types: `info` (blue), `success` (gold), `warning` (orange). Stacks vertically, new toasts slide in from top.  
   **Output:** Toasts display without overlapping. Old toasts dismiss before new ones stack over limit. All messages use localization keys.
 
-- [ ] **T-098 · Write mobile FAB (Floating Action Button)**  
+- [x] **T-098 · Write mobile FAB (Floating Action Button)**  
   Context-sensitive button, bottom-right on mobile only. Priority logic (PRD §17.9): checks for revivable player, Ikatan offer, spirit fragment, spirit interaction, instrument mode. Fires appropriate action on tap. Hidden on PC/console.  
   **Output:** FAB shows correct action label for nearest interactive element. Tapping fires the action. Disappears when no context available.
 
-- [ ] **T-099 · Write `client/UI/DailyTaskPanel.luau`**  
+- [x] **T-099 · Write `client/UI/DailyTaskPanel.luau`**  
   Panel showing 5 tasks with progress bars, milestone reward indicators (5 tiers), Full Clear bonus highlight. Claim button per tier when completed. Daily/Weekly/Monthly tabs. Login streak display with day counter. All text localized. RTL-compatible layout.  
   **Output:** All task states visible. Milestone claim fires `DailyTask_ClaimMilestone`. Streak day and next reward visible. Opens from HUD shortcut.
 
-- [ ] **T-100 · Write `client/UI/IkatanPanel.luau`**  
+- [x] **T-100 · Write `client/UI/IkatanPanel.luau`**  
   List of all Ikatan partners with online/offline indicator. Teleport button (30-min cooldown shown as countdown). Gift button. Remove Ikatan option. Shows pending incoming offer with Accept/Decline. Add-Ikatan prompt shown when near a non-bonded player.  
   **Output:** Full Ikatan management from one panel. Cooldown timer visible. Offer notification auto-opens panel.
 
-- [ ] **T-101 · Write `client/UI/SeasonPanel.luau`**  
+- [x] **T-101 · Write `client/UI/SeasonPanel.luau`**  
   Show active season name, time remaining, spirit progress (freed/total), quest chain step tracker, Koin Musim balance and shop. Musim Pass buy button (fires `Monetization_PurchasePrompt`). All text localized.  
   **Output:** Season state fully visible. Purchase prompt fires correctly. Quest chain progress updates in real-time.
 
@@ -749,7 +749,7 @@
 | Phase 12 — Emotes | T-075 → T-079 | 5 / 5 |
 | Phase 13 — Cosmetics | T-080 → T-085 | 6 / 6 |
 | Phase 14 — Sky's Peak | T-086 → T-089 | 4 / 4 |
-| Phase 15 — UI Layer | T-090 → T-101 | 0 / 12 |
+| Phase 15 — UI Layer | T-090 → T-101 | 12 / 12 |
 | Phase 16 — Input | T-102 → T-104 | 0 / 3 |
 | Phase 17 — Audio | T-105 → T-106 | 0 / 2 |
 | Phase 18 — Localization | T-107 → T-112 | 0 / 6 |
@@ -759,4 +759,4 @@
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **90 / 144** |
+| **TOTAL** | | **102 / 144** |

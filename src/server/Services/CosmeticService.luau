@@ -208,6 +208,7 @@ function CosmeticService.init(player: Player)
 
 	Remotes.Cosmetic_InventorySync_S2C:FireClient(player, {
 		ownedItems = ownedItemsList(data),
+		uiScale    = data.uiScale,
 	})
 
 	Remotes.Cosmetic_EquipResult_S2C:FireClient(player, {
