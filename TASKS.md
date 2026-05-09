@@ -400,27 +400,27 @@
 
 ## Phase 13 — Cosmetics & Inventory
 
-- [ ] **T-080 · Write `server/Services/CosmeticService.luau` — grantItem (idempotent)**  
+- [x] **T-080 · Write `server/Services/CosmeticService.luau` — grantItem (idempotent)**  
   `CosmeticService.grantItem(player, itemId)`: if `ownedItems[itemId]` already exists, no-op and return. Validate `itemId` exists in `CosmeticDefs`. Add to `ownedItems`. Fire `Cosmetic_InventorySync_S2C` (partial update: `{ newItemId }`). Award Awan XP based on rarity tier.  
   **Output:** No duplicate items. Re-granting same item is safe. Client inventory updates immediately.
 
-- [ ] **T-081 · Write `CosmeticService` — equip validation + relay**  
+- [x] **T-081 · Write `CosmeticService` — equip validation + relay**  
   On `Cosmetic_EquipRequest { slot, itemId }`: validate slot is a valid `EquippedLoadout` key; if `itemId` is non-nil, validate owned. Update `equippedItems[slot]`. Fire `Cosmetic_EquipResult_S2C { success, loadout }` to player. Fire `Cosmetic_LoadoutRelay_S2C { userId, loadout }` to all players within 50 studs.  
   **Output:** Equip change persists. Nearby players see updated appearance within one relay cycle.
 
-- [ ] **T-082 · Write `CosmeticService` — fragment crafting**  
+- [x] **T-082 · Write `CosmeticService` — fragment crafting**  
   `CosmeticService.grantFragment(player, itemId)`: increment `fragmentInventory[itemId]`. If count reaches 3: auto-call `grantItem(player, itemId)`; reset fragment count; fire `Cosmetic_FragmentCrafted_S2C { itemId }` to client.  
   **Output:** Three fragments auto-craft into one item. Player receives toast notification. Fragment count resets.
 
-- [ ] **T-083 · Write `CosmeticService` — inventory sync on join**  
+- [x] **T-083 · Write `CosmeticService` — inventory sync on join**  
   In `CosmeticService.init(player)`: fire `Cosmetic_InventorySync_S2C { ownedItems: { string } }` and `Cosmetic_EquipResult_S2C { loadout }` to the joining player.  
   **Output:** Client has full inventory and loadout data before character renders.
 
-- [ ] **T-084 · Write `client/Controllers/CosmeticController.luau` — character rendering**  
+- [x] **T-084 · Write `client/Controllers/CosmeticController.luau` — character rendering**  
   On `Cosmetic_EquipResult_S2C` and `Cosmetic_LoadoutRelay_S2C`: for the relevant character, apply each equipped item by cloning its model from `ReplicatedStorage.Assets.Cosmetics[itemId]` and welding to the correct character attachment. Clear previous item in slot before applying new one. Wing skin: swap the mesh on the wing model.  
   **Output:** Character visually updates when loadout changes. Other players' characters also update on relay. No item models pile up.
 
-- [ ] **T-085 · Write `client/UI/InventoryPanel.luau`**  
+- [x] **T-085 · Write `client/UI/InventoryPanel.luau`**  
   `ScreenGui` panel with category tabs (Cape, Mask, Hair, Outfit, Wing Skin, Instrument, Emote, Trail, Aura, Prop). List owned items per category with rarity color border. Tap/click to equip (fires `Cosmetic_EquipRequest`). Unequip button per slot. RTL-compatible tab order.  
   **Output:** Full inventory browsable by category. Equip/unequip works. Rarity visible. Localized category names.
 
@@ -747,7 +747,7 @@
 | Phase 10 — Seasons | T-064 → T-069 | 6 / 6 |
 | Phase 11 — Instruments | T-070 → T-074 | 5 / 5 |
 | Phase 12 — Emotes | T-075 → T-079 | 5 / 5 |
-| Phase 13 — Cosmetics | T-080 → T-085 | 0 / 6 |
+| Phase 13 — Cosmetics | T-080 → T-085 | 6 / 6 |
 | Phase 14 — Sky's Peak | T-086 → T-089 | 0 / 4 |
 | Phase 15 — UI Layer | T-090 → T-101 | 0 / 12 |
 | Phase 16 — Input | T-102 → T-104 | 0 / 3 |
@@ -759,4 +759,4 @@
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **80 / 144** |
+| **TOTAL** | | **86 / 144** |
