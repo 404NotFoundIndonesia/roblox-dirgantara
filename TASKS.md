@@ -169,19 +169,19 @@
 
 ## Phase 4 — Wing Progression
 
-- [ ] **T-032 · Write `server/Services/WingService.luau` — upgrade flow**  
+- [x] **T-032 · Write `server/Services/WingService.luau` — upgrade flow**  
   On `Wing_UpgradeRequest`: validate `wingLevel < 10`, `cahayaHati >= WingDefs[level+1].cahayaHatiCost`, no active Sky's Peak run (`SkysPeakService.isRunActive(player)`). Deduct cost, increment `wingLevel`, update `FlightService` charge max, award Awan XP (`+50 * newLevel`), fire `Wing_UpgradeResult_S2C { success, newLevel, newCahayaHati }`.  
   **Output:** Upgrade succeeds when all conditions met. Insufficient Cahaya Hati returns `success = false`. Wing level persists in DataStore.
 
-- [ ] **T-033 · Write `WingService` — realm entry gate**  
+- [x] **T-033 · Write `WingService` — realm entry gate**  
   Expose `WingService.canEnterRealm(player, realmId): boolean`. Called on realm arrival (TeleportService). If `wingLevel < RealmDefs[realmId].minWingLevel`: fire `Wing_GateDenied_S2C` (add this remote to `Remotes.luau`) with required level; do NOT allow character to spawn in the realm (kick back to Hub).  
   **Output:** Under-leveled players are refused realm entry with a clear message. No way to enter gated realm through teleport manipulation.
 
-- [ ] **T-034 · Write `WingService` — join sync**  
+- [x] **T-034 · Write `WingService` — join sync**  
   In `WingService.init(player)`: fire `Wing_LevelSync_S2C { level }` to player. Update `FlightService` charge max to match persisted wing level.  
   **Output:** Returning player's wing level is immediately correct on rejoin.
 
-- [ ] **T-035 · Write `WingService` — Awan XP + Awan Rank**  
+- [x] **T-035 · Write `WingService` — Awan XP + Awan Rank**  
   `WingService.awardAwanXP(player, amount)`: increment `awanXP`, check against rank thresholds (PRD §5.2 table), fire `AwanXP_Update_S2C { xp, rank }` if rank changed. Add remote to Remotes.luau.  
   **Output:** XP awards from all sources (wing upgrade, Ikatan, Sky's Peak) accumulate. Rank-up fires notification to client.
 
