@@ -140,28 +140,28 @@
 
 ## Phase 3 — Cahaya System
 
-- [ ] **T-026 · Write `server/Services/CahayaService.luau` — orb collection**  
+- [x] **T-026 · Write `server/Services/CahayaService.luau` — orb collection**  
   On `Cahaya_CollectOrb`: validate player within 10 studs of orb position (server reads orb position from workspace by `orbId`); orb not already in per-session collected set; `dailyCahayaCollected < 150`. If pass: increment `cahaya` + `dailyCahayaCollected`, destroy orb part, fire `Cahaya_CollectResult_S2C`. Mark orb for respawn in 5 minutes.  
   **Output:** Orb collected → Cahaya increments → orb disappears. Cap of 150 enforced. Duplicate collection rejected.
 
-- [ ] **T-027 · Write `CahayaService` — orb respawn timer**  
+- [x] **T-027 · Write `CahayaService` — orb respawn timer**  
   Track each destroyed orb by `orbId` with a `task.delay(300, respawnFn)`. `respawnFn` re-clones the orb Part from a template in `ReplicatedStorage.Assets.Orbs` and places it at the original position. Orb tagged `"CahayaOrb"` with original `orbId` attribute restored.  
   **Output:** Orbs reappear 5 minutes after collection. Re-entering the realm shows available orbs (server-side truth).
 
-- [ ] **T-028 · Write `CahayaService` — Cahaya sync on join**  
+- [x] **T-028 · Write `CahayaService` — Cahaya sync on join**  
   In `CahayaService.init(player)`: fire `Cahaya_SyncState_S2C { cahaya, cahayaHati }` to the joining player immediately after data load.  
   **Output:** Client shows correct Cahaya values as soon as character spawns.
 
-- [ ] **T-029 · Write `CahayaService` — extinguish / revive**  
+- [x] **T-029 · Write `CahayaService` — extinguish / revive**  
   `CahayaService.drain(player, amount)`: deduct `amount` from `cahaya`; if reaches 0, fire `Cahaya_Extinguished_S2C`, call `FlightService.extinguish(player)`, teleport to `lastSafeCheckpoint` (stored in session memory, updated every 10 seconds player is in a safe zone).  
   `CahayaService.revive(rescuer, target)`: validate both within 8 studs server-side; deduct 1 from `rescuer.cahaya`; set `target.cahaya = 10`; call `FlightService.restore(target)`; fire `Cahaya_Restored_S2C` to target; fire `Cahaya_SyncState_S2C` to rescuer. Fire `"PlayerRevived"` BindableEvent for daily task tracking.  
   **Output:** Extinguishment triggers flight lock + teleport. Revive restores target with 10 Cahaya. Rescuer's Cahaya decrements.
 
-- [ ] **T-030 · Write `CahayaService` — Cahaya Hati gifting**  
+- [x] **T-030 · Write `CahayaService` — Cahaya Hati gifting**  
   `CahayaService.gift(giver, recipient, amount)`: validate `ikatanGiftsGivenToday < 3` (daily limit); deduct from giver `cahayaHati`, add to recipient `cahayaHati`; increment giver's gift count; award giver +0.5 `cahayaHati`; fire `Cahaya_GiftResult_S2C` to giver; fire notification to recipient.  
   **Output:** Gift succeeds ≤3 times/day. Giver gets partial return. Recipient balance updates.
 
-- [ ] **T-031 · Write `CahayaService` — safe checkpoint tracking**  
+- [x] **T-031 · Write `CahayaService` — safe checkpoint tracking**  
   Every 10 seconds (server `task.delay` loop per player), if player is NOT in a Kegelapan zone: record `lastSafeCheckpoint = character.PrimaryPart.Position`. Used by extinguishment respawn.  
   **Output:** Respawn after extinguishment places player at last known safe location, not world origin.
 
