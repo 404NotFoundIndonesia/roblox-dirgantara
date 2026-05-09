@@ -26,6 +26,7 @@
 13. [Audio Design](#13-audio-design)
 14. [Economy Overview](#14-economy-overview)
 15. [Technical Notes (Roblox)](#15-technical-notes-roblox)
+16. [Localization](#16-localization)
 
 ---
 
@@ -626,6 +627,226 @@ Voxel models use **MeshPart** or **Union** with simplified collision. Large real
 | `sleitnick/component` | Component pattern for game objects |
 | `evaera/maid` | Cleanup/lifecycle |
 | `osyrisrblx/t` | Runtime type checking |
+
+---
+
+## 16. Localization
+
+Dirgantara uses **Roblox's built-in LocalizationService** as the foundation. All player-facing strings go through the localization pipeline — no hardcoded text anywhere in UI or scripts.
+
+### 16.1 Supported Languages
+
+Two tiers. Tier 1 ships at launch. Tier 2 ships within Season 1 window.
+
+| Tier | Language | Locale Code | Script | Direction | Notes |
+|---|---|---|---|---|---|
+| **1** | English | `en` | Latin | LTR | Default / fallback |
+| **1** | Indonesian | `id` | Latin | LTR | Primary culture of game |
+| **1** | Japanese | `ja` | CJK (Kanji + Kana) | LTR (vertical alt) | Large Roblox JP playerbase |
+| **1** | Arabic | `ar` | Arabic | **RTL** | Full RTL layout flip required |
+| **1** | Chinese Simplified | `zh-cn` | CJK (Hanzi) | LTR | Mainland China playerbase |
+| **2** | Chinese Traditional | `zh-tw` | CJK (Hanzi) | LTR | Taiwan / HK |
+| **2** | Korean | `ko` | Hangul | LTR | |
+| **2** | Portuguese (Brazil) | `pt-br` | Latin | LTR | Largest Roblox market in LAM |
+| **2** | Spanish | `es` | Latin | LTR | |
+| **2** | French | `fr` | Latin | LTR | |
+| **2** | German | `de` | Latin | LTR | |
+
+### 16.2 Roblox Localization Setup
+
+**LocalizationTable** lives in `ReplicatedStorage`. All string keys are loaded client-side via `LocalizationService:GetTranslatorForPlayerAsync()`.
+
+```
+ReplicatedStorage/
+  Localization/
+    LocalizationTable   ← Roblox LocalizationTable instance
+```
+
+**String key convention:** `CATEGORY_SUBCATEGORY_KEY`
+
+```
+UI_HUD_CAHAYA           → "Cahaya"
+UI_HUD_WING_CHARGE      → "Wing Charge"
+UI_MENU_DAILY_TASKS     → "Daily Tasks"
+REALM_NAME_ISLE_DAWN    → "Isle of Dawn"
+SPIRIT_ISLE_WATCHER_NAME → "Spirit of the Watcher"
+DAILY_TASK_COLLECT_CAHAYA → "Collect {count} Cahaya"
+NOTIFY_IKATAN_FORMED    → "{playerName} formed a bond with you!"
+SEASON_PASS_TITLE       → "Musim Pass"
+ERROR_WING_TOO_LOW      → "Reach Wing Level {level} to enter this realm."
+```
+
+All keys use **named parameters** in braces `{paramName}` — never positional `%1` — because word order differs across languages.
+
+### 16.3 Translation Workflow
+
+```
+Developers write strings in English (en)
+       ↓
+Export CSV from Roblox LocalizationTable
+       ↓
+Manual translation: id, ar (Tier 1 priority)
+       ↓
+Roblox AutoTranslate: ja, zh-cn, zh-tw, ko, pt-br, es, fr, de
+       ↓
+Native speaker review pass (especially ja, ar, zh-cn)
+       ↓
+Import back to LocalizationTable
+       ↓
+QA: text overflow, RTL layout, encoding
+```
+
+**Indonesian (id)** strings are written by the dev team directly — it is the game's source culture. English is the technical default/fallback, but Indonesian strings get human-authored treatment equal to English.
+
+**Auto-translate caveat:** Roblox AutoTranslate is adequate for UI labels. All narrative strings (spirit vignette subtitles, season quest text) require human review before shipping.
+
+### 16.4 Font Strategy
+
+Roblox's `Font` enum does not support all scripts natively. Use `FontFace` with fallback chains.
+
+| Script | Recommended Font | Fallback |
+|---|---|---|
+| Latin (en, id, pt-br, es, fr, de) | `GothamSsm` (default Roblox) | `Arial` |
+| CJK (ja, zh-cn, zh-tw, ko) | `SourceHanSans` (via AssetID) | `Arial` (glyphs missing — avoid) |
+| Arabic (ar) | `NotoSansArabic` (via AssetID) | No good fallback — must load asset |
+
+**Implementation:** Load locale-appropriate font on `LocalizationService.RobloxLocaleId` change. Font assets preloaded via `ContentProvider:PreloadAsync()` on startup.
+
+```lua
+-- shared/Fonts.luau
+local FONTS = {
+    ["ar"] = "rbxassetid://ARABIC_FONT_ID",
+    ["ja"] = "rbxassetid://CJK_FONT_ID",
+    ["zh-cn"] = "rbxassetid://CJK_FONT_ID",
+    ["zh-tw"] = "rbxassetid://CJK_FONT_ID",
+    ["ko"] = "rbxassetid://CJK_FONT_ID",
+}
+-- All others: default GothamSsm
+```
+
+### 16.5 RTL Layout (Arabic)
+
+Arabic requires **full UI mirror**. Every horizontal layout flips.
+
+**Rules:**
+- All `HorizontalAlignment` values flip: `Left` ↔ `Right`
+- All `AnchorPoint` X values flip: `0` ↔ `1`
+- Flex/list layouts set `FillDirection` based on locale
+- Icons that convey direction (arrows, "next" chevrons) flip horizontally
+- Icons that are symbolic (star, heart, wing) do NOT flip
+- HUD element positions mirror (Cahaya counter moves to top right, Social Pulse to bottom left)
+- Text alignment inside labels: always `RichText` with `TextXAlignment.Left` for LTR, `Right` for RTL — never `Center` for body text
+
+**Implementation pattern:** A global `LayoutDirection` value in `ReplicatedStorage` set to `"LTR"` or `"RTL"` on client startup. All UI components read this and adjust. Never hardcode pixel offsets — use constraints.
+
+```lua
+-- client/UI/LayoutDirection.luau
+local locale = LocalizationService.RobloxLocaleId
+local RTL_LOCALES = { ["ar"] = true }
+return RTL_LOCALES[locale] and "RTL" or "LTR"
+```
+
+### 16.6 Text Expansion Budget
+
+Translated text is almost always longer than English. UI must not clip or overflow.
+
+| Source Language | Typical Expansion vs English |
+|---|---|
+| Indonesian | +10–20% |
+| German | +20–35% |
+| French | +15–25% |
+| Arabic | +20–30% (also taller due to diacritics) |
+| Japanese | −10 to +5% (dense glyphs, usually shorter) |
+| Chinese | −20 to −10% (very dense, shorter) |
+
+**Design rules:**
+- All UI text containers use `AutomaticSize = Y` (vertical expansion) — never fixed height for text
+- Button widths use `AutomaticSize = X` with a `UIPadding` constraint — never fixed-width label buttons
+- HUD counters (Cahaya count, wing charge segments) are number-only — no expansion risk
+- Max line width on mobile: 80% screen width. Text wraps, never clips.
+- Any string longer than 40 characters (English) must be tested in German and Arabic before shipping
+
+### 16.7 Number, Date & Currency Formatting
+
+Use locale-aware formatting — never raw `tostring()`.
+
+| Data | English (en) | Indonesian (id) | Arabic (ar) | Japanese (ja) |
+|---|---|---|---|---|
+| Large number | 1,500 | 1.500 | ١٬٥٠٠ | 1,500 |
+| Decimal | 1.5 | 1,5 | ١٫٥ | 1.5 |
+| Date (reset timer) | May 9, 2026 | 9 Mei 2026 | ٩ مايو ٢٠٢٦ | 2026年5月9日 |
+| Time | 11:30 PM | 23.30 | ١١:٣٠ م | 23:30 |
+
+Arabic numerals in `ar` locale use **Eastern Arabic numerals** (٠١٢٣٤٥٦٧٨٩) by default. Provide a setting to switch to Western (0–9) for players who prefer it.
+
+**Implementation:** A shared `Format.luau` module wraps all number/date formatting with locale dispatch.
+
+```lua
+-- shared/Format.luau
+local Format = {}
+
+function Format.number(n: number): string
+    local locale = LocalizationService.RobloxLocaleId
+    -- dispatch to locale-specific formatter
+end
+
+function Format.countdown(seconds: number): string
+    -- returns "2h 30m" localized
+end
+
+return Format
+```
+
+### 16.8 In-World Text
+
+- **Realm names** displayed in HUD compass: localized via string key
+- **Spirit names** in Galeri Roh: localized
+- **Floating damage/effect numbers** (Cahaya collected): numbers only, no localization needed
+- **Instrument note labels** (if shown): use universal musical notation (A, B, C…) — not localized, music is universal
+- **NPC expression bubbles / preset phrases:** fully localized (these are the primary "chat" for under-13 players)
+- **Player-entered names** (Ikatan gift messages, if added later): pass through Roblox text filter per locale — never bypass
+
+### 16.9 Preset Expression Phrases (Localized)
+
+The expression bubble system (Section 6.3) ships with 20 preset phrases. All must be localized across all Tier 1 languages.
+
+| Key | English | Indonesian | Japanese | Arabic | Chinese (Simplified) |
+|---|---|---|---|---|---|
+| `EXPR_HELLO` | Hello! | Halo! | こんにちは！ | مرحباً! | 你好！ |
+| `EXPR_FOLLOW_ME` | Follow me! | Ikuti aku! | ついてきて！ | تعال معي! | 跟我来！ |
+| `EXPR_THANK_YOU` | Thank you! | Terima kasih! | ありがとう！ | شكراً! | 谢谢！ |
+| `EXPR_HELP_ME` | Help me! | Tolong aku! | 助けて！ | ساعدني! | 帮帮我！ |
+| `EXPR_WAIT_HERE` | Wait here! | Tunggu di sini! | ここで待って！ | انتظر هنا! | 在这等！ |
+| `EXPR_GOOD_JOB` | Good job! | Bagus! | よくやった！ | أحسنت! | 干得好！ |
+| `EXPR_LETS_FLY` | Let's fly! | Ayo terbang! | 飛ぼう！ | لنطر! | 一起飞！ |
+| `EXPR_SO_PRETTY` | So pretty! | Cantik sekali! | きれい！ | جميل! | 好美！ |
+
+Remaining 12 phrases cover: directions (left/right/up/down), social (come here, look at this, I'll carry you, you carry me), and reactions (wow, amazing, oops, sorry).
+
+### 16.10 Cultural Considerations
+
+| Culture | Consideration |
+|---|---|
+| **Indonesian (id)** | Game's primary theme. Gamelan instruments, wayang shadow aesthetics in spirit designs. Ramadan seasonal event candidate. |
+| **Japanese (ja)** | Vertical text optional for spirit vignette titles (decorative only). Torii gate motifs in seasonal realm extension. Avoid white-only death screens — associate white with mourning in some contexts. |
+| **Arabic (ar)** | Avoid imagery of chess pieces, dogs, or bare-limb characters in cosmetics marketed to this region. Ramadan event resonates strongly. Prayer time notification opt-in (system-level, not in-game). |
+| **Chinese (zh-cn / zh-tw)** | Red = luck/positive (use for rewards, not danger). White = mourning (avoid for "success" banners). Number 4 considered unlucky — avoid "4-player" featured bundle pricing. |
+| **All** | No religious iconography in core cosmetics. Seasonal events use nature/celestial themes, not religious ones, to stay inclusive. |
+
+### 16.11 QA Checklist for Localization
+
+Before each season launch, run through:
+
+- [ ] All new string keys have translations for all Tier 1 languages
+- [ ] Arabic layout tested on portrait mobile (RTL flip complete)
+- [ ] No text overflow on German or Arabic strings in any UI panel
+- [ ] CJK font loaded and renders correctly on mobile (low-end device test)
+- [ ] Countdown timers show correct locale date format
+- [ ] Preset expression phrases reviewed by native speaker (at least id, ar, ja)
+- [ ] Spirit vignette subtitles reviewed by native speaker (id, ar, ja)
+- [ ] Eastern Arabic numeral toggle tested
+- [ ] No hardcoded English strings introduced in new UI components
+- [ ] `Format.number()` and `Format.countdown()` called for all displayed numbers
 
 ---
 
