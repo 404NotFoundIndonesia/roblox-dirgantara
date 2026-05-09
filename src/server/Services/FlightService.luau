@@ -38,6 +38,16 @@ end
 
 local FlightService = {}
 
+-- ─── BindableEvents exposed for DailyTaskService ─────────────────────────────
+
+local _airtimeEvent = Instance.new("BindableEvent")
+_airtimeEvent.Name  = "AirtimeAccumulated"
+FlightService.AirtimeAccumulated = _airtimeEvent   -- Fire(player, { amount = seconds })
+
+local _carryCompleteEvent = Instance.new("BindableEvent")
+_carryCompleteEvent.Name  = "CarrySessionCompleted"
+FlightService.CarrySessionCompleted = _carryCompleteEvent   -- Fire(carrier, carried)
+
 -- ─── Types ────────────────────────────────────────────────────────────────────
 
 type ChargeState = { current: number, max: number }

@@ -66,9 +66,17 @@ local _fragmentCollectedEvent = Instance.new("BindableEvent")
 _fragmentCollectedEvent.Name  = "SpiritFragmentCollected"
 SpiritService.SpiritFragmentCollected = _fragmentCollectedEvent
 
+local _fragmentSetCompleteEvent = Instance.new("BindableEvent")
+_fragmentSetCompleteEvent.Name  = "SpiritFragmentSetComplete"
+SpiritService.SpiritFragmentSetComplete = _fragmentSetCompleteEvent   -- fires when ALL fragments for a spirit are collected
+
 local _spiritFreedEvent = Instance.new("BindableEvent")
 _spiritFreedEvent.Name  = "SpiritFreed"
 SpiritService.SpiritFreed = _spiritFreedEvent
+
+local _dailySpiritTouchedEvent = Instance.new("BindableEvent")
+_dailySpiritTouchedEvent.Name  = "DailySpiritTouched"
+SpiritService.DailySpiritTouched = _dailySpiritTouchedEvent
 
 -- ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -301,6 +309,15 @@ Remotes.Spirit_CollectFragment.OnServerEvent:Connect(function(player: any, paylo
 		fragmentIndex = fragmentIndex,
 	})
 	_fragmentCollectedEvent:Fire(player :: Player, spiritId, fragmentIndex)
+
+	-- Fire set-complete event when all fragments for this spirit are now collected
+	local collectedCount = 0
+	for _ in _collectedFragments[userId][spiritId] do
+		collectedCount += 1
+	end
+	if collectedCount >= def.fragmentCount then
+		_fragmentSetCompleteEvent:Fire(player :: Player, { amount = 1, spiritId = spiritId })
+	end
 end)
 
 -- ─── T-053: Free spirit ───────────────────────────────────────────────────────
@@ -455,6 +472,7 @@ Remotes.Spirit_TouchDaily.OnServerEvent:Connect(function(player: any, payload: a
 		cahayaGained     = DAILY_CAHAYA_REWARD,
 		cahayaHatiGained = DAILY_CAHAYAHATI_REWARD,
 	})
+	_dailySpiritTouchedEvent:Fire(player :: Player, { amount = 1, spiritId = spiritId })
 end)
 
 -- ─── T-055: Companion toggle ──────────────────────────────────────────────────

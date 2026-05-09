@@ -1,16 +1,26 @@
 --[[
     EmoteService.luau
     ───────────────────
-    Stub — implementation in TASKS.md Phase 1+.
-    Follows the standard service pattern (PRD §1.4).
+    Stub — full implementation in TASKS.md Phase 12 (T-075 / T-076).
+
+    BindableEvents exposed for DailyTaskService:
+        EmoteService.EmoteUsedNearPlayer — Fire(player, { amount = 1 })
 ]]
 
 local EmoteService = {}
 
-function EmoteService.init(_player: Player)
+-- ─── BindableEvents ───────────────────────────────────────────────────────────
+
+local _emoteNearPlayerEvent = Instance.new("BindableEvent")
+_emoteNearPlayerEvent.Name  = "EmoteUsedNearPlayer"
+EmoteService.EmoteUsedNearPlayer = _emoteNearPlayerEvent
+
+-- ─── Service lifecycle ────────────────────────────────────────────────────────
+
+function EmoteService.init(_: Player)
 end
 
-function EmoteService.cleanup(_player: Player)
+function EmoteService.cleanup(_: Player)
 end
 
 return EmoteService

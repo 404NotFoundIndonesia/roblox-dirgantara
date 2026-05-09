@@ -294,27 +294,27 @@
 
 ## Phase 9 — Daily Task System
 
-- [ ] **T-058 · Write `server/Services/DailyTaskService.luau` — task generation**  
+- [x] **T-058 · Write `server/Services/DailyTaskService.luau` — task generation**  
   On `init(player)` (after daily reset check): if `taskState.date != today`: generate new tasks. Seed = `player.UserId XOR tonumber(dateString)`. From seed: pick 3 from `EasyPool`, 1 from `MediumPool`, 1 from `HardPool` (no duplicates). Write to `PlayerData.taskState`. Fire `DailyTask_Sync_S2C { taskState }` to player.  
   **Output:** Each player gets a deterministic daily set (same on rejoin). Different players get different tasks. No duplicate tasks in one day's set.
 
-- [ ] **T-059 · Write `DailyTaskService` — BindableEvent listeners**  
+- [x] **T-059 · Write `DailyTaskService` — BindableEvent listeners**  
   Subscribe to all tracking `BindableEvent`s (listed in PRD §11.1 table). On each event: find matching active (incomplete) tasks for the player; call `incrementProgress(player, taskDef, amount)`. If `progress >= target`: mark completed, fire `DailyTask_Progress_S2C { taskId, newProgress, completed = true }`.  
   **Output:** Every in-game action that maps to a task type increments the correct task. Multiple tasks can share the same event (e.g., two "collect Cahaya" tasks with different targets).
 
-- [ ] **T-060 · Write `DailyTaskService` — milestone claim**  
+- [x] **T-060 · Write `DailyTaskService` — milestone claim**  
   On `DailyTask_ClaimMilestone { tier }`: validate `completedCount >= tierThreshold[tier]`; tier not already in `milestoneRewardsClaimed`. Grant reward: Cahaya via `CahayaService`, `cahayaHati` via direct data write, cosmetic fragment via `CosmeticService`. For tier 5 (Full Clear): roll Daily Chest from weighted table (PRD §11.2). Fire `DailyTask_MilestoneResult_S2C { tier, reward }`.  
   **Output:** Each milestone tier claimable exactly once per day. Full Clear reward randomly selects from weighted chest table.
 
-- [ ] **T-061 · Write `DailyTaskService` — login streak**  
+- [x] **T-061 · Write `DailyTaskService` — login streak**  
   On `DataService` emit of `"PlayerLoaded"` BindableEvent: compute today's date string. Compare with `lastStreakDate`. If yesterday: increment streak. If today: no-op. If gap > 1 day: check `graceDaysRemaining > 0`, consume grace or reset streak to 1. Update `lastStreakDate`. Grant streak reward if milestone day (1, 3, 7, 14, 30, 60) via `CahayaService` + `CosmeticService`. Add grace day every 30-day streak up to max 3.  
   **Output:** Streak increments daily. Grace days consumed for misses. Milestone rewards granted once per milestone day.
 
-- [ ] **T-062 · Write `DailyTaskService` — weekly milestone tracking**  
+- [x] **T-062 · Write `DailyTaskService` — weekly milestone tracking**  
   After each Full Clear: increment `weeklyState.fullClearDays`. On weekly reset (ISO week change): if `fullClearDays >= 5` and `rewardClaimed == false`: make reward available (client can claim via `DailyTask_ClaimWeekly` remote — add to Remotes). Grant 1 Rare cosmetic or 100 Koin Musim.  
   **Output:** Weekly milestone triggers after 5 full-clear days. Reward claimed once per week. New week resets counter.
 
-- [ ] **T-063 · Write `DailyTaskService` — monthly milestone tracking**  
+- [x] **T-063 · Write `DailyTaskService` — monthly milestone tracking**  
   After each weekly milestone claim: increment `monthlyState.weeklyMilestonesMet`. On monthly reset (calendar month change): if `weeklyMilestonesMet >= 3` and `rewardClaimed == false`: make monthly reward available. Grant 1 Epic cosmetic.  
   **Output:** Monthly reward triggers after 3 weekly milestones in same month. Resets each new calendar month.
 
@@ -743,7 +743,7 @@
 | Phase 6 — Naga Gelap AI | T-041 → T-045 | 5 / 5 |
 | Phase 7 — Ikatan | T-046 → T-050 | 5 / 5 |
 | Phase 8 — Spirits | T-051 → T-057 | 7 / 7 |
-| Phase 9 — Daily Tasks | T-058 → T-063 | 0 / 6 |
+| Phase 9 — Daily Tasks | T-058 → T-063 | 6 / 6 |
 | Phase 10 — Seasons | T-064 → T-069 | 0 / 6 |
 | Phase 11 — Instruments | T-070 → T-074 | 0 / 5 |
 | Phase 12 — Emotes | T-075 → T-079 | 0 / 5 |
@@ -759,4 +759,4 @@
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **58 / 144** |
+| **TOTAL** | | **64 / 144** |

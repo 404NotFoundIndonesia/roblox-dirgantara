@@ -49,6 +49,10 @@ local _playerRevivedEvent = Instance.new("BindableEvent")
 _playerRevivedEvent.Name  = "PlayerRevived"
 CahayaService.PlayerRevived = _playerRevivedEvent
 
+local _cahayaCollectedEvent = Instance.new("BindableEvent")
+_cahayaCollectedEvent.Name  = "CahayaCollected"
+CahayaService.CahayaCollected = _cahayaCollectedEvent   -- fires on each orb collected
+
 -- ─── Per-player session state ─────────────────────────────────────────────────
 
 local _players:          { [number]: Player }         = {}
@@ -190,6 +194,9 @@ Remotes.Cahaya_CollectOrb.OnServerEvent:Connect(function(player: Player, payload
 		dailyCollected = data.dailyCahayaCollected,
 		capReached     = capReached,
 	})
+
+	-- Notify DailyTaskService
+	_cahayaCollectedEvent:Fire(player, { amount = ORB_CAHAYA_VALUE })
 
 	-- Schedule respawn after 5 minutes (T-027)
 	task.delay(Constants.ORB_RESPAWN_TIME, function()

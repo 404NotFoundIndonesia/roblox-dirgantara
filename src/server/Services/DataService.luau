@@ -33,6 +33,10 @@ local _dailyResetEvent = Instance.new("BindableEvent")
 _dailyResetEvent.Name  = "DailyReset"
 DataService.DailyReset = _dailyResetEvent   -- DailyTaskService subscribes to this
 
+local _playerLoadedEvent = Instance.new("BindableEvent")
+_playerLoadedEvent.Name  = "PlayerLoaded"
+DataService.PlayerLoaded = _playerLoadedEvent   -- fires after data is loaded; used by DailyTaskService for login streak
+
 -- ─── DataStore handles ────────────────────────────────────────────────────────
 
 local _playerStore:  GlobalDataStore  = DataStoreService:GetDataStore(Constants.DS_PLAYER_DATA)
@@ -239,6 +243,7 @@ end
 function DataService.init(player: Player)
 	load(player)
 	startAutoSave(player)
+	_playerLoadedEvent:Fire(player)
 end
 
 function DataService.cleanup(player: Player)

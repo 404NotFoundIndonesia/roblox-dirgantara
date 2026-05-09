@@ -30,6 +30,19 @@ function CosmeticService.grantItem(player: Player, itemId: string)
 	data.ownedItems[itemId] = true
 end
 
+-- Add one fragment of itemId. Auto-crafts to grantItem when count reaches 3 (T-082, Phase 13).
+function CosmeticService.grantFragment(player: Player, itemId: string)
+	local data = getDS().get(player)
+	if not data then
+		return
+	end
+	data.fragmentInventory[itemId] = (data.fragmentInventory[itemId] or 0) + 1
+	if data.fragmentInventory[itemId] >= 3 then
+		data.fragmentInventory[itemId] = 0
+		CosmeticService.grantItem(player, itemId)
+	end
+end
+
 function CosmeticService.init(_: Player)
 end
 

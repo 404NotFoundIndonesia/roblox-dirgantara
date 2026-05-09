@@ -66,6 +66,12 @@ end
 
 local KegelapanService = {}
 
+-- ─── BindableEvent exposed for DailyTaskService ───────────────────────────────
+
+local _kegelapanExitedEvent = Instance.new("BindableEvent")
+_kegelapanExitedEvent.Name  = "KegelapanExited"
+KegelapanService.KegelapanExited = _kegelapanExitedEvent
+
 -- ─── Types ────────────────────────────────────────────────────────────────────
 
 type ZoneData = {
@@ -242,6 +248,13 @@ RunService.Heartbeat:Connect(function(dt: number)
 				Remotes.Kegelapan_ZoneState_S2C:FireClient(player, {
 					zoneId  = zoneId,
 					entered = false,
+				})
+
+				-- Notify DailyTaskService (payload carries survival status)
+				_kegelapanExitedEvent:Fire(player, {
+					amount       = 1,
+					extinguished = getCS().isExtinguished(player),
+					zoneId       = zoneId,
 				})
 			end
 		end

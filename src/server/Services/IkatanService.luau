@@ -54,6 +54,10 @@ local _ikatanFormedEvent = Instance.new("BindableEvent")
 _ikatanFormedEvent.Name  = "IkatanFormed"
 IkatanService.IkatanFormed = _ikatanFormedEvent
 
+local _ikatanOfferSentEvent = Instance.new("BindableEvent")
+_ikatanOfferSentEvent.Name  = "IkatanOfferSent"
+IkatanService.IkatanOfferSent = _ikatanOfferSentEvent
+
 -- ─── Constants ────────────────────────────────────────────────────────────────
 
 local BOND_CAHAYAHATI_REWARD = 2   -- cahayaHati awarded to each player on bond
@@ -218,6 +222,8 @@ Remotes.Ikatan_OfferRequest.OnServerEvent:Connect(function(sender: Player, paylo
 		fromUserId = senderId,
 		fromName   = sender.DisplayName,
 	})
+
+	_ikatanOfferSentEvent:Fire(sender, {})
 end)
 
 -- ─── T-047: Accept / decline flow ────────────────────────────────────────────
