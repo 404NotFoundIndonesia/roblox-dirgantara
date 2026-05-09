@@ -38,6 +38,7 @@ local Remotes   = require(Shared.Remotes)
 local _DataService:    any = nil
 local _CahayaService:  any = nil
 local _FlightService:  any = nil
+local _NagaGelapAI:    any = nil
 local function getDS(): any
 	if not _DataService then
 		_DataService = require(script.Parent.DataService)
@@ -55,6 +56,12 @@ local function getFS(): any
 		_FlightService = require(script.Parent.FlightService)
 	end
 	return _FlightService
+end
+local function getNGA(): any
+	if not _NagaGelapAI then
+		_NagaGelapAI = require(script.Parent.Parent.NPC.NagaGelapAI)
+	end
+	return _NagaGelapAI
 end
 
 local KegelapanService = {}
@@ -205,6 +212,7 @@ RunService.Heartbeat:Connect(function(dt: number)
 				-- Notify cross-service state
 				getCS().setKegelapanZone(player, true)
 				getFS().setKegelapan(player, true)
+				getNGA().onPlayerEnterZone(player, zoneId, zone.part)
 
 				Remotes.Kegelapan_ZoneState_S2C:FireClient(player, {
 					zoneId  = zoneId,
@@ -216,6 +224,7 @@ RunService.Heartbeat:Connect(function(dt: number)
 
 			elseif not inZone and wasInZone then
 				_activeZones[userId][zoneId] = nil
+				getNGA().onPlayerExitZone(player, zoneId)
 
 				-- If no other zones remain, clear the global "in kegelapan" flags
 				local stillInAny = false

@@ -8,6 +8,7 @@
     CahayaService.init(player)                      -- sync state; start checkpoint loop
     CahayaService.cleanup(player)                   -- cancel loops; clear state
     CahayaService.drain(player, amount)             -- deduct Cahaya; extinguish at 0
+    CahayaService.extinguish(player)               -- force-extinguish immediately (NagaGelapAI)
     CahayaService.revive(rescuer, target)           -- rescue extinguished player
     CahayaService.gift(giver, recipient, amount)    -- Cahaya Hati transfer (Ikatan)
     CahayaService.setKegelapanZone(player, active)  -- called by KegelapanService
@@ -257,6 +258,34 @@ function CahayaService.drain(player: Player, amount: number)
 			if char then
 				char:PivotTo(CFrame.new(checkpoint))
 			end
+		end
+	end
+end
+
+-- Force-extinguish a player regardless of current Cahaya (called by NagaGelapAI).
+function CahayaService.extinguish(player: Player)
+	local userId = player.UserId
+	if _isExtinguished[userId] then return end
+
+	local data = getDS().get(player)
+	if not data then return end
+
+	data.cahaya         = 0
+	_isExtinguished[userId] = true
+
+	getFS().extinguish(player)
+	Remotes.Cahaya_Extinguished_S2C:FireClient(player, {})
+
+	Remotes.Cahaya_SyncState_S2C:FireClient(player, {
+		cahaya     = 0,
+		cahayaHati = data.cahayaHati,
+	})
+
+	local checkpoint = _safeCheckpoints[userId]
+	if checkpoint then
+		local char = player.Character
+		if char then
+			char:PivotTo(CFrame.new(checkpoint))
 		end
 	end
 end

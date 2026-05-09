@@ -213,23 +213,23 @@
 
 ## Phase 6 — Naga Gelap AI
 
-- [ ] **T-041 · Write `server/NPC/NagaGelapAI.luau` — state machine**  
+- [x] **T-041 · Write `server/NPC/NagaGelapAI.luau` — state machine**  
   Implement PATROL → CHASE → EXTINGUISH_PLAYER state machine (PRD §8.2). On zone entry (triggered by `KegelapanService`): spawn up to 3 Naga models from template asset. State transitions: scan players within 40 studs per tick, check `cahaya > 20` and `isDimmed == false` for detection. On catch (≤5 studs): call `CahayaService.extinguish(target)`, return to PATROL.  
   **Output:** Naga detects bright players, chases, catches, extinguishes, patrols again. Dim players are ignored.
 
-- [ ] **T-042 · Write `NagaGelapAI` — pathfinding**  
+- [x] **T-042 · Write `NagaGelapAI` — pathfinding**  
   Use `PathfindingService:CreatePath()` + `Path:ComputeAsync()` for chase. Recalculate path every 2 seconds or when path is blocked. Move Naga via `Humanoid:MoveTo()` following waypoints.  
   **Output:** Naga navigates around obstacles inside the zone. Does not get stuck on terrain.
 
-- [ ] **T-043 · Write `NagaGelapAI` — zone boundary clamping**  
+- [x] **T-043 · Write `NagaGelapAI` — zone boundary clamping**  
   Each Naga has a `zoneBounds: Region3` set at spawn time (derived from the zone `BasePart` extents). Before every `MoveTo()`: clamp target position to `zoneBounds`. Naga never chases a player outside its zone boundary.  
   **Output:** Naga cannot leave its assigned zone, even if chasing a player who exits.
 
-- [ ] **T-044 · Write `NagaGelapAI` — client relay**  
+- [x] **T-044 · Write `NagaGelapAI` — client relay**  
   Server fires `NagaGelap_StateRelay_S2C { nagaId, position, state }` every 0.1 seconds to players within 80 studs. On despawn: fire `{ nagaId, despawned = true }`. Add remotes to `Remotes.luau`.  
   **Output:** Client receives Naga position updates at 10Hz for nearby Nagas. Client-side model moves smoothly via CFrame interpolation. Naga disappears when no players present.
 
-- [ ] **T-045 · Write client-side Naga rendering**  
+- [x] **T-045 · Write client-side Naga rendering**  
   On `NagaGelap_StateRelay_S2C`: clone Naga model from `ReplicatedStorage.Assets.NPCs.NagaGelap`, place at received position. Interpolate CFrame each `RenderStepped` toward latest server position (smoothing factor 0.15). Play growl audio, intensity scaled inversely to distance from player. On despawn message: destroy model.  
   **Output:** Naga renders smoothly on client without snapping. Audio grows louder as Naga approaches.
 
@@ -740,7 +740,7 @@
 | Phase 3 — Cahaya | T-026 → T-031 | 0 / 6 |
 | Phase 4 — Wings | T-032 → T-035 | 0 / 4 |
 | Phase 5 — Kegelapan | T-036 → T-040 | 5 / 5 |
-| Phase 6 — Naga Gelap AI | T-041 → T-045 | 0 / 5 |
+| Phase 6 — Naga Gelap AI | T-041 → T-045 | 5 / 5 |
 | Phase 7 — Ikatan | T-046 → T-050 | 0 / 5 |
 | Phase 8 — Spirits | T-051 → T-057 | 0 / 7 |
 | Phase 9 — Daily Tasks | T-058 → T-063 | 0 / 6 |
@@ -759,4 +759,4 @@
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **41 / 144** |
+| **TOTAL** | | **46 / 144** |
