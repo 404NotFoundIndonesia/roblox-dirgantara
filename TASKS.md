@@ -108,31 +108,31 @@
 
 ## Phase 2 — Flight System
 
-- [ ] **T-019 · Write `server/Services/FlightService.luau` — boost validation**  
+- [x] **T-019 · Write `server/Services/FlightService.luau` — boost validation**  
   On `Flight_RequestBoost`: check player's current charge > 0; validate submitted position within plausible range (≤80 studs from `lastValidPosition` at L1–3, ≤100 at L4–5, ≤150 absolute cap); deduct 1 charge segment; update `lastValidPosition`; fire `Flight_BoostResult_S2C { granted = true, newCharge }`. Reject outside-range requests, fire `{ granted = false }`, force-reset player position.  
   **Output:** Legitimate boosts confirmed. Teleport-exploit positions rejected and player snapped back.
 
-- [ ] **T-020 · Write `FlightService` — charge config per player**  
+- [x] **T-020 · Write `FlightService` — charge config per player**  
   Store per-player charge state: `{ current: number, max: number }` keyed by `userId`. Max segments determined by wing level (PRD §4.1 table). `FlightService.setWingLevel(player, level)` updates max. `FlightService.addCharge(player, amount)` clamps to max.  
   **Output:** Wing upgrade instantly updates charge max. `FlightService.getCharge(player)` returns accurate current charge.
 
-- [ ] **T-021 · Write `FlightService` — charge refill loop**  
+- [x] **T-021 · Write `FlightService` — charge refill loop**  
   Server-side `RunService.Heartbeat` loop: for each player, detect if on ground (raycast downward ≤3 studs) → refill at 0.25 seg/sec; detect nearby higher-level player (≤15 studs) → refill at 0.75 seg/sec; apply Harmoni bonus (+0.5 seg/sec) if flagged; halve all refill if in Kegelapan zone. Fire `Flight_BoostResult_S2C` when charge changes.  
   **Output:** Charge refills at correct rates. Kegelapan halving active inside zones. Harmoni bonus applied while Harmoni active.
 
-- [ ] **T-022 · Write `FlightService` — extinguish / restore**  
+- [x] **T-022 · Write `FlightService` — extinguish / restore**  
   `FlightService.extinguish(player)`: set `Humanoid.JumpHeight = 0`, `WalkSpeed = 8`, store `isExtinguished = true`. `FlightService.restore(player)`: reverse Humanoid properties, set `isExtinguished = false`. Called by `CahayaService`.  
   **Output:** Extinguished players cannot fly or jump. Restored players regain full mobility.
 
-- [ ] **T-023 · Write `FlightService` — carry mechanic (server)**  
+- [x] **T-023 · Write `FlightService` — carry mechanic (server)**  
   On `Flight_CarryRequest`: validate carrier is wing level ≥4, within 8 studs of target, not already carrying. On `Flight_CarryAccept`: create `WeldConstraint` between carrier `BackAttachment` and carried `HumanoidRootPart`; set carry flags. Double charge cost per boost for carrier. On `Flight_CarryEnd` or either player leaves: destroy weld, clear flags, fire `Flight_CarryState_S2C { active = false }` to both.  
   **Output:** Carried player moves with carrier. Bail by either party cleanly destroys weld. Carrier charge depletes at 2x rate.
 
-- [ ] **T-024 · Write `client/Controllers/FlightController.luau` — state machine**  
+- [x] **T-024 · Write `client/Controllers/FlightController.luau` — state machine**  
   Implement the 4-state machine: `IDLE → BOOST → GLIDE → EXTINGUISHED`. On FlyBoost action: fire `Flight_RequestBoost` with current position + velocity. On `Flight_BoostResult_S2C`: if granted, apply impulse to character; update charge display. On `Cahaya_Extinguished_S2C`: enter EXTINGUISHED state. On `Cahaya_Restored_S2C`: exit to IDLE.  
   **Output:** Smooth flight. State machine correctly transitions. Server rejection snaps player back without jank. Extinguished state disables boost input.
 
-- [ ] **T-025 · Write `client/Controllers/CameraController.luau`**  
+- [x] **T-025 · Write `client/Controllers/CameraController.luau`**  
   Auto-orbit: camera follows movement direction on mobile (no input needed). Swipe-to-look on mobile, mouse-look on PC, right-stick on console. Smooth interpolation (`CFrame.lerp`, `RunService.RenderStepped`). No camera clipping through terrain (use Roblox default camera offset as base).  
   **Output:** Camera feels responsive on all three platforms. No jitter or clipping artifacts.
 
