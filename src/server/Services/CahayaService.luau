@@ -7,6 +7,7 @@
     ──────────
     CahayaService.init(player)                      -- sync state; start checkpoint loop
     CahayaService.cleanup(player)                   -- cancel loops; clear state
+    CahayaService.add(player, amount)               -- add Cahaya (no daily cap; social/spirit rewards)
     CahayaService.drain(player, amount)             -- deduct Cahaya; extinguish at 0
     CahayaService.extinguish(player)               -- force-extinguish immediately (NagaGelapAI)
     CahayaService.revive(rescuer, target)           -- rescue extinguished player
@@ -229,6 +230,17 @@ Remotes.Cahaya_GiftRequest.OnServerEvent:Connect(function(giver: Player, payload
 end)
 
 -- ─── T-029: Extinguish / restore public API ───────────────────────────────────
+
+-- Add Cahaya without touching the daily orb cap (FR-CAH-04: social/spirit rewards exempt).
+function CahayaService.add(player: Player, amount: number)
+	local data = getDS().get(player)
+	if not data then return end
+	data.cahaya += amount
+	Remotes.Cahaya_SyncState_S2C:FireClient(player, {
+		cahaya     = data.cahaya,
+		cahayaHati = data.cahayaHati,
+	})
+end
 
 -- Deduct `amount` from player's Cahaya; extinguish if it reaches 0.
 function CahayaService.drain(player: Player, amount: number)

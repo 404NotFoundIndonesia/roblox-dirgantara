@@ -262,31 +262,31 @@
 
 ## Phase 8 — Spirits System
 
-- [ ] **T-051 · Write `server/Services/SpiritService.luau` — spawn + tagging**  
+- [x] **T-051 · Write `server/Services/SpiritService.luau` — spawn + tagging**  
   On startup: iterate `SpiritDefs` for the current realm. Clone spirit model from `ReplicatedStorage.Assets.Spirits[spiritId]`, position at `def.position`. Tag with `CollectionService:AddTag("Spirit", model.PrimaryPart)`. Set `spiritId` attribute on primary part. Repeat for all fragment positions.  
   **Output:** All spirits for the realm spawn in-world at startup. Fragment parts are individually tagged and positioned correctly.
 
-- [ ] **T-052 · Write `SpiritService` — fragment collection validation**  
+- [x] **T-052 · Write `SpiritService` — fragment collection validation**  
   On `Spirit_CollectFragment { spiritId, fragmentIndex, position }`: check player within 8 studs of `SpiritDefs[spiritId].fragmentPositions[fragmentIndex]`; fragment not already in per-player per-spirit session cache. Mark fragment collected. Fire visual confirmation remote to client. Fire `"SpiritFragmentCollected"` BindableEvent.  
   **Output:** Server validates proximity. Duplicate collection rejected. Client gets confirmation to play collect animation.
 
-- [ ] **T-053 · Write `SpiritService` — free spirit validation + reward**  
+- [x] **T-053 · Write `SpiritService` — free spirit validation + reward**  
   On `Spirit_FreeRequest { spiritId }`: validate all fragments collected (check session cache count == `def.fragmentCount`); `PlayerData.freedSpiritIds[spiritId]` does not exist; if Season Spirit, `seasonPassOwned == true`. On success: set `freedSpiritIds[spiritId] = true`; call `CahayaService.add(player, def.reward.cahaya)`; call `WingService.awardAwanXP`; call `CosmeticService.grantItem(player, def.reward.itemId)` if present; fire `Spirit_FreeResult_S2C { success, reward }`; fire `"SpiritFreed"` BindableEvent.  
   **Output:** Spirit can only be freed once per account. All rewards granted in single atomic block. Daily task fires.
 
-- [ ] **T-054 · Write `SpiritService` — daily spirit spawn**  
+- [x] **T-054 · Write `SpiritService` — daily spirit spawn**  
   On first server boot of a UTC+7 day: check `DailySpiritSpawn_v1["YYYYMMDD"]`. If missing: generate 2 random realm + position pairs (seed: `tonumber(dateString)`), write to DataStore, cache in `MemoryStoreService`. All subsequent servers read from cache. On `Spirit_TouchDaily { spiritId, position }`: validate proximity; `spiritId` not in `PlayerData.dailySpiritsTouched`; grant +5 Cahaya + 0.5 Cahaya Hati; add to `dailySpiritsTouched`; fire `Spirit_DailyResult_S2C`.  
   **Output:** Same 2 daily spirit positions across all servers each day. Each player can touch each once per day.
 
-- [ ] **T-055 · Write `SpiritService` — companion toggle**  
+- [x] **T-055 · Write `SpiritService` — companion toggle**  
   On `Spirit_ToggleCompanion { spiritId }`: validate spirit is freed (`freedSpiritIds[spiritId]`); toggle `activeCompanionSpiritId` in session memory. Fire `Spirit_CompanionState_S2C { spiritId, active }` to client.  
   **Output:** Server tracks which companion is active per player. Client uses this to render or dismiss companion model.
 
-- [ ] **T-056 · Write client-side companion rendering**  
+- [x] **T-056 · Write client-side companion rendering**  
   On `Spirit_CompanionState_S2C { spiritId, active = true }`: clone companion model from assets, attach to player character at fixed CFrame offset (1.5 studs to right, bobbing via `math.sin(tick())` offset on `RenderStepped`). On `active = false`: destroy model.  
   **Output:** Companion floats beside player, bobs smoothly. Dismissed cleanly.
 
-- [ ] **T-057 · Write `GaleriRohPanel` + RemoteFunction**  
+- [x] **T-057 · Write `GaleriRohPanel` + RemoteFunction**  
   Add `GaleriRoh_GetList_Fn` (RemoteFunction) to `Remotes.luau`. Server returns `{ spiritIds: { string }, spiritDefs: { SpiritDef } }` for all freed spirits. Client panel opens as `ScreenGui`, renders each spirit in a `ViewportFrame` showing its diorama model. Clicking a spirit plays the vignette animation sequence.  
   **Output:** Panel opens, lists all freed spirits with thumbnails. Vignette plays on select. RTL-compatible layout.
 
@@ -742,7 +742,7 @@
 | Phase 5 — Kegelapan | T-036 → T-040 | 5 / 5 |
 | Phase 6 — Naga Gelap AI | T-041 → T-045 | 5 / 5 |
 | Phase 7 — Ikatan | T-046 → T-050 | 5 / 5 |
-| Phase 8 — Spirits | T-051 → T-057 | 0 / 7 |
+| Phase 8 — Spirits | T-051 → T-057 | 7 / 7 |
 | Phase 9 — Daily Tasks | T-058 → T-063 | 0 / 6 |
 | Phase 10 — Seasons | T-064 → T-069 | 0 / 6 |
 | Phase 11 — Instruments | T-070 → T-074 | 0 / 5 |
@@ -759,4 +759,4 @@
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **51 / 144** |
+| **TOTAL** | | **58 / 144** |
