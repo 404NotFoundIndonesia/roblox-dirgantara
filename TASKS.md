@@ -189,23 +189,23 @@
 
 ## Phase 5 — Kegelapan System
 
-- [ ] **T-036 · Write `server/Services/KegelapanService.luau` — zone detection**  
+- [x] **T-036 · Write `server/Services/KegelapanService.luau` — zone detection**  
   On server startup, find all `BasePart` tagged `"KegelapanZone"`. For each zone: read `DrainRate`, `DrainInterval`, `ZoneId` attributes. On `RunService.Heartbeat`: check each player's position against each zone using `workspace:GetPartBoundsInBox()`. On zone entry: start drain loop, fire `Kegelapan_ZoneState_S2C { zoneId, entered = true }`. On exit: stop loop, fire `{ entered = false }`.  
   **Output:** Entering a Kegelapan zone starts Cahaya drain and fires client visual cue. Exiting stops drain. Multiple zones supported simultaneously.
 
-- [ ] **T-037 · Write `KegelapanService` — drain loop**  
+- [x] **T-037 · Write `KegelapanService` — drain loop**  
   Per player per active zone: `task.delay(DrainInterval, fn)` loop that calls `CahayaService.drain(player, DrainRate)`. Loop cancels when player exits zone or is extinguished. Respect `isDimmed` flag: if true, drain pauses 5s then resumes at 0.5x rate.  
   **Output:** Drain ticks every N seconds inside zone. Dim toggle pauses then reduces drain. Extinguishment stops the loop.
 
-- [ ] **T-038 · Write `KegelapanService` — self-dim toggle**  
+- [x] **T-038 · Write `KegelapanService` — self-dim toggle**  
   On `Kegelapan_DimRequest`: toggle `isDimmed[player]`. Fire `Kegelapan_DimState_S2C { dimmed: boolean }` to player and nearby players (for visual cue). Add these two remotes to `Remotes.luau`.  
   **Output:** Player can toggle light dim. Naga Gelap AI reads `isDimmed` flag. Client shows dim visual.
 
-- [ ] **T-039 · Write `KegelapanService` — Peti Cahaya chests**  
+- [x] **T-039 · Write `KegelapanService` — Peti Cahaya chests**  
   On `PetiCahaya_Open` remote: validate player is inside the chest's parent zone; chest not already opened (`PlayerData.openedChests[chestId]`). Grant reward (Cahaya + cosmetic fragment). Set `openedChests[chestId] = true` permanently. Add remote to `Remotes.luau`.  
   **Output:** Chest opens once per account. Reward granted. Re-opening returns no reward (flag persists in DataStore).
 
-- [ ] **T-040 · Write client-side Kegelapan visuals**  
+- [x] **T-040 · Write client-side Kegelapan visuals**  
   On `Kegelapan_ZoneState_S2C`: `AudioController` crossfades ambient music to tension track; apply `ColorCorrectionEffect` to `Lighting` (desaturated, dark). On zone exit: fade back to normal. On `Kegelapan_DimState_S2C { dimmed = true }`: reduce player character light emission (dim `SurfaceLight` or `PointLight` on character).  
   **Output:** Entering darkness zone is immediately apparent visually and audibly. Dim toggle visible to nearby players.
 
@@ -739,7 +739,7 @@
 | Phase 2 — Flight | T-019 → T-025 | 0 / 7 |
 | Phase 3 — Cahaya | T-026 → T-031 | 0 / 6 |
 | Phase 4 — Wings | T-032 → T-035 | 0 / 4 |
-| Phase 5 — Kegelapan | T-036 → T-040 | 0 / 5 |
+| Phase 5 — Kegelapan | T-036 → T-040 | 5 / 5 |
 | Phase 6 — Naga Gelap AI | T-041 → T-045 | 0 / 5 |
 | Phase 7 — Ikatan | T-046 → T-050 | 0 / 5 |
 | Phase 8 — Spirits | T-051 → T-057 | 0 / 7 |
@@ -759,4 +759,4 @@
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **0 / 144** |
+| **TOTAL** | | **41 / 144** |
