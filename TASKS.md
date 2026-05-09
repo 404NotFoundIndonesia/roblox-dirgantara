@@ -237,24 +237,24 @@
 
 ## Phase 7 — Ikatan (Bond) System
 
-- [ ] **T-046 · Write `server/Services/IkatanService.luau` — offer flow**  
+- [x] **T-046 · Write `server/Services/IkatanService.luau` — offer flow**  
   On `Ikatan_OfferRequest { targetUserId }`: validate sender and target within 8 studs server-side; target not already in sender's `ikatanList`; both `ikatanList.length < 30`. Store `pendingOffers[targetUserId] = { fromUserId, expiresAt = os.time() + 30 }`. Fire `Ikatan_OfferNotify_S2C { fromUserId, fromName }` to target.  
   **Output:** Offer stored in-memory with TTL. Target receives notification. Expired offers are rejected on accept.
 
-- [ ] **T-047 · Write `IkatanService` — accept / decline flow**  
+- [x] **T-047 · Write `IkatanService` — accept / decline flow**  
   On `Ikatan_AcceptRequest`: validate pending offer exists and `os.time() < expiresAt`. Write both `ikatanList` arrays via `DataService.writeGlobal("IkatanGraph_v1", ...)` using `UpdateAsync`. Award +2 `cahayaHati` to both via `CahayaService`. Award +30 Awan XP to both via `WingService`. Fire `Ikatan_FormedResult_S2C` to both. Fire `"IkatanFormed"` BindableEvent.  
   On `Ikatan_DeclineRequest`: clear pending offer silently.  
   **Output:** Bond is bidirectional and persisted. Both players' balances update. Daily task tracking fires.
 
-- [ ] **T-048 · Write `IkatanService` — teleport**  
+- [x] **T-048 · Write `IkatanService` — teleport**  
   On `Ikatan_TeleportRequest { targetUserId }`: validate target in sender's `ikatanList`; cooldown not active (`lastTeleportTime[player] + 1800 < os.time()`); target's current realm wing level ≥ sender's wing level. Call `TeleportService:TeleportToPlaceInstance` with target's server instance code. Update `lastTeleportTime[player]`.  
   **Output:** Teleport to bonded partner works cross-server. 30-min cooldown enforced per session. Under-leveled destination blocked.
 
-- [ ] **T-049 · Write `IkatanService` — online presence via MemoryStore**  
+- [x] **T-049 · Write `IkatanService` — online presence via MemoryStore**  
   On `IkatanService.init(player)`: write `userId → serverJobId` to `MemoryStoreService.SortedMap("OnlinePlayers")` with 60s TTL. Refresh TTL every 45 seconds. On `cleanup(player)`: remove entry. On join: query MemoryStore for all Ikatan partners, fire `Ikatan_PresenceUpdate_S2C { onlinePartnerIds: { number } }` to player.  
   **Output:** Client knows which bonded partners are online. Presence updates within ~60 seconds of partner join/leave.
 
-- [ ] **T-050 · Write `IkatanService` — Ikatan gifting**  
+- [x] **T-050 · Write `IkatanService` — Ikatan gifting**  
   On `Ikatan_GiftRequest { targetUserId, itemId }`: validate `itemId` in sender's `ownedItems`; `targetUserId` in sender's `ikatanList`; item is giftable (`CosmeticDefs[itemId].giftable == true`). Remove from sender's inventory. Grant to recipient via `CosmeticService.grantItem`. Fire `Ikatan_GiftNotify_S2C` to recipient.  
   **Output:** Item transferred between bonded players. Sender loses item; recipient gains it. Non-giftable items rejected.
 
@@ -741,7 +741,7 @@
 | Phase 4 — Wings | T-032 → T-035 | 0 / 4 |
 | Phase 5 — Kegelapan | T-036 → T-040 | 5 / 5 |
 | Phase 6 — Naga Gelap AI | T-041 → T-045 | 5 / 5 |
-| Phase 7 — Ikatan | T-046 → T-050 | 0 / 5 |
+| Phase 7 — Ikatan | T-046 → T-050 | 5 / 5 |
 | Phase 8 — Spirits | T-051 → T-057 | 0 / 7 |
 | Phase 9 — Daily Tasks | T-058 → T-063 | 0 / 6 |
 | Phase 10 — Seasons | T-064 → T-069 | 0 / 6 |
@@ -759,4 +759,4 @@
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **46 / 144** |
+| **TOTAL** | | **51 / 144** |
