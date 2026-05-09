@@ -516,11 +516,11 @@
 
 ## Phase 17 — Audio
 
-- [ ] **T-105 · Write `client/Controllers/AudioController.luau` — adaptive ambient score**  
+- [x] **T-105 · Write `client/Controllers/AudioController.luau` — adaptive ambient score**  
   Three ambient states: `SOLO` (sparse flute), `SOCIAL` (layered harmonic), `KEGELAPAN` (atonal tension). Crossfade between states using `Sound:TweenVolume()`. State determined by: players within 20 studs (solo→social), zone entry (→kegelapan). Kegelapan overrides social.  
   **Output:** Music transitions smoothly as context changes. No abrupt cuts. Kegelapan tension track plays inside dark zones.
 
-- [ ] **T-106 · Write `AudioController` — instrument note sounds**  
+- [x] **T-106 · Write `AudioController` — instrument note sounds**  
   Load 5 pentatonic note `Sound` instances (C D E G A) per instrument type from `Constants.luau` asset IDs. On `Instrument_NoteRelay_S2C`: play the note sound at the source player's position using `SoundService` with distance falloff. Spatial audio via `Sound.RollOffMaxDistance = 40`.  
   **Output:** Each instrument sounds distinct. Notes fade with distance. Playing instruments blends into ambient music naturally.
 
@@ -751,7 +751,7 @@
 | Phase 14 — Sky's Peak | T-086 → T-089 | 4 / 4 |
 | Phase 15 — UI Layer | T-090 → T-101 | 12 / 12 |
 | Phase 16 — Input | T-102 → T-104 | 3 / 3 |
-| Phase 17 — Audio | T-105 → T-106 | 0 / 2 |
+| Phase 17 — Audio | T-105 → T-106 | 2 / 2 |
 | Phase 18 — Localization | T-107 → T-112 | 0 / 6 |
 | Phase 19 — Monetization | T-113 → T-118 | 0 / 6 |
 | Phase 20 — Multi-Place | T-119 → T-121 | 0 / 3 |
@@ -759,4 +759,4 @@
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **105 / 144** |
+| **TOTAL** | | **107 / 144** |
