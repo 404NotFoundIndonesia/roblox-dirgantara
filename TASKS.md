@@ -84,23 +84,23 @@
 
 ## Phase 1 — Data Layer
 
-- [ ] **T-014 · Write `server/Services/DataService.luau` — load / save / retry**  
+- [x] **T-014 · Write `server/Services/DataService.luau` — load / save / retry**  
   Implement `load(player)`: fetch from `"PlayerData_v1_{userId}"` with `retryAsync` (5 attempts, 2s delay). If first-ever save: create default `PlayerData` from `Types.luau`. Cache in-memory. Implement `save(player)`: write via `UpdateAsync` with `retryAsync`. If load fails: use blank-state with `dataLoadFailed = true` flag — do not overwrite real data on exit.  
   **Output:** Player data loads on join, persists on leave. `DataService.get(player)` returns in-memory copy. Failed loads produce blank state without overwriting DataStore.
 
-- [ ] **T-015 · Write `DataService` — daily reset logic**  
+- [x] **T-015 · Write `DataService` — daily reset logic**  
   On `load(player)`, compare `dailyResetTimestamp` against current UTC+7 midnight (`os.time()` adjusted). If stale: zero `dailyCahayaCollected`, `ikatanGiftsGivenToday`, `dailyChestBonusUsedToday`; clear `dailySpiritsTouched`; update `dailyResetTimestamp`. Fire a `BindableEvent` `"DailyReset"` so `DailyTaskService` can react.  
   **Output:** Player logging in after midnight gets fresh daily counts. Same-day re-login does not reset.
 
-- [ ] **T-016 · Write `DataService` — auto-save loop**  
+- [x] **T-016 · Write `DataService` — auto-save loop**  
   Start a `task.delay` loop per player that calls `DataService.save(player)` every 60 seconds while the player is in-game.  
   **Output:** DataStore is written every 60 seconds per online player. Loop is cancelled in `cleanup(player)`.
 
-- [ ] **T-017 · Write `DataService` — global DataStore helpers**  
+- [x] **T-017 · Write `DataService` — global DataStore helpers**  
   Implement accessors for `IkatanGraph_v1`, `SeasonConfig_v1`, `DailySpiritSpawn_v1`, `PurchaseHistory_v1`, `PendingGrants_v1`, `Leaderboard_v1` (OrderedDataStore). All wrapped with same `retryAsync` utility.  
   **Output:** Other services can call `DataService.readGlobal(storeName, key)` and `DataService.writeGlobal(storeName, key, value)` without touching DataStore API directly.
 
-- [ ] **T-018 · Write `retryAsync` utility**  
+- [x] **T-018 · Write `retryAsync` utility**  
   Standalone module in `shared/` or inline in `DataService`: `retryAsync(fn, maxAttempts, delaySeconds)` — pcall wraps `fn`, retries on failure, warns after all attempts exhausted, returns `nil` on total failure.  
   **Output:** Unit-testable. Used in DataService and IkatanService for all async DataStore calls.
 
