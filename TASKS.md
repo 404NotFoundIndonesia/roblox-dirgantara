@@ -428,19 +428,19 @@
 
 ## Phase 14 — Sky's Peak
 
-- [ ] **T-086 · Write `server/Services/SkysPeakService.luau` — run state machine**  
+- [x] **T-086 · Write `server/Services/SkysPeakService.luau` — run state machine**  
   States: `IDLE → ASCENDING → SUMMIT → SACRIFICING → COMPLETE`. On player arrival in Puncak Langit place: set state to `ASCENDING`. On reaching summit trigger zone (tagged `BasePart "SkysPeakSummit"`): set `SUMMIT`, fire `SkysPeak_SummitReached_S2C`. On `SkysPeak_Sacrifice` remote: validate state is `SUMMIT`. Begin `SACRIFICING` (5-second lock). On complete: execute reward flow, teleport back.  
   **Output:** State machine enforces correct flow. Sacrifice cannot be triggered outside summit zone. Disconnect mid-run clears state on next login.
 
-- [ ] **T-087 · Write `SkysPeakService` — sacrifice + reward flow**  
+- [x] **T-087 · Write `SkysPeakService` — sacrifice + reward flow**  
   On `SACRIFICING` completion: zero `PlayerData.cahaya`; increment `skysPeakCycles`; award +3 `cahayaHati`; award Awan XP +200; call `CosmeticService.grantItem(player, "WING_BADGE_\{cycleNumber}")`. Fire `SkysPeak_CycleComplete_S2C { cyclesTotal, reward }`. Set `lastRealmId` restore point. Teleport back via `TeleportService`.  
   **Output:** All rewards granted atomically. Cahaya zeroed. Badge ID is cycle-number-specific. Cosmetics unlocked persist.
 
-- [ ] **T-088 · Write `SkysPeakService` — Kegelapan altitude scaling**  
+- [x] **T-088 · Write `SkysPeakService` — Kegelapan altitude scaling**  
   During a run, on `RunService.Heartbeat`: read player's Y position. Map altitude from realm floor to summit into 0→1 range. Scale `DrainRate` from 1 to 3 using linear interpolation. Update the player's active Kegelapan zone drain rate dynamically.  
   **Output:** Darkness intensifies as player ascends. Near summit, drain is 3x baseline.
 
-- [ ] **T-089 · Write `SkysPeakService` — disconnect recovery**  
+- [x] **T-089 · Write `SkysPeakService` — disconnect recovery**  
   In `SkysPeakService.init(player)`: check if `skysPeakRunInProgress` flag (session MemoryStore key `"SkysPeakRun_\{userId}"`). If true: clear flag, set state to `IDLE`. Player is in no-penalty state.  
   **Output:** Disconnecting mid-run does not lock or penalize the player on next login.
 
@@ -748,7 +748,7 @@
 | Phase 11 — Instruments | T-070 → T-074 | 5 / 5 |
 | Phase 12 — Emotes | T-075 → T-079 | 5 / 5 |
 | Phase 13 — Cosmetics | T-080 → T-085 | 6 / 6 |
-| Phase 14 — Sky's Peak | T-086 → T-089 | 0 / 4 |
+| Phase 14 — Sky's Peak | T-086 → T-089 | 4 / 4 |
 | Phase 15 — UI Layer | T-090 → T-101 | 0 / 12 |
 | Phase 16 — Input | T-102 → T-104 | 0 / 3 |
 | Phase 17 — Audio | T-105 → T-106 | 0 / 2 |
@@ -759,4 +759,4 @@
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **86 / 144** |
+| **TOTAL** | | **90 / 144** |

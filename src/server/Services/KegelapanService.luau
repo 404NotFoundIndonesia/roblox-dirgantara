@@ -94,9 +94,10 @@ local CHEST_FRAGMENT_REWARD = "FRAGMENT_COMMON"
 
 -- ─── Per-player state ─────────────────────────────────────────────────────────
 
-local _players:     { [number]: Player }               = {}
-local _activeZones: { [number]: { [string]: boolean } } = {}  -- userId → { zoneId → true }
-local _isDimmed:    { [number]: boolean }              = {}
+local _players:          { [number]: Player }               = {}
+local _activeZones:      { [number]: { [string]: boolean } } = {}  -- userId → { zoneId → true }
+local _isDimmed:         { [number]: boolean }              = {}
+local _drainRateOverride: { [number]: number }              = {}  -- set by SkysPeakService for altitude scaling
 
 -- ─── Zone / chest registration ────────────────────────────────────────────────
 
@@ -182,11 +183,12 @@ local function startDrainLoop(player: Player, zone: ZoneData)
 				if not _players[userId] then return end
 				if not (_activeZones[userId] and _activeZones[userId][zone.zoneId]) then return end
 				if cs.isExtinguished(player) then return end
-				cs.drain(player, zone.drainRate * Constants.DIM_DRAIN_MULTIPLIER)
+				local baseRate = _drainRateOverride[userId] or zone.drainRate
+				cs.drain(player, baseRate * Constants.DIM_DRAIN_MULTIPLIER)
 				task.delay(zone.drainInterval, tick)
 			end)
 		else
-			cs.drain(player, zone.drainRate)
+			cs.drain(player, _drainRateOverride[userId] or zone.drainRate)
 			task.delay(zone.drainInterval, tick)
 		end
 	end
@@ -342,6 +344,11 @@ end)
 
 -- ─── Public query API ─────────────────────────────────────────────────────────
 
+-- Called by SkysPeakService to scale drain with altitude (T-088).
+function KegelapanService.setDrainRateOverride(player: Player, rate: number)
+	_drainRateOverride[player.UserId] = rate
+end
+
 function KegelapanService.isDimmed(player: Player): boolean
 	return _isDimmed[player.UserId] == true
 end
@@ -373,9 +380,10 @@ function KegelapanService.cleanup(player: Player)
 		getFS().setKegelapan(player, false)
 	end
 
-	_players[userId]     = nil
-	_activeZones[userId] = nil
-	_isDimmed[userId]    = nil
+	_players[userId]          = nil
+	_activeZones[userId]      = nil
+	_isDimmed[userId]         = nil
+	_drainRateOverride[userId] = nil
 end
 
 return KegelapanService
