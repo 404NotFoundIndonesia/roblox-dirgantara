@@ -350,25 +350,25 @@
 
 ## Phase 11 — Instruments & Harmoni
 
-- [ ] **T-070 · Write `server/Services/InstrumentService.luau` — note relay with rate limit**  
+- [x] **T-070 · Write `server/Services/InstrumentService.luau` — note relay with rate limit**  
   On `Instrument_PlayNote { instrumentId, noteIndex }`: validate player owns instrument; validate `instrumentId == equippedItems.instrument`; enforce 10 notes/sec rate limit per player. Find all players within 40 studs. Fire `Instrument_NoteRelay_S2C { userId, instrumentId, noteIndex }` to each.  
   On `Instrument_Strum`: same flow, no rate limit check (strum is one event).  
   On `Instrument_SustainStart` / `Instrument_SustainEnd`: relay both to nearby players.  
   **Output:** Notes relay only to nearby players. Excess notes dropped silently. All 5 instrument types handled.
 
-- [ ] **T-071 · Write `InstrumentService` — Harmoni detection**  
+- [x] **T-071 · Write `InstrumentService` — Harmoni detection**  
   Every 5 seconds via `task.delay` loop: scan all online players; find clusters of 2+ players within 20 studs all playing instruments (tracked via `isPlaying[userId]` flag set on first note, cleared after 5s silence). For each cluster: fire `Harmoni_Start_S2C { playerIds }` to all in cluster; set `harmoniActive[userId] = true`; call `FlightService.applyHarmoniBonus(player)`. On cluster drop below 2: fire `Harmoni_End_S2C`, clear bonus.  
   **Output:** Harmoni triggers when 2+ musicians are close. Flight charge refill bonus applies. Ends when musicians separate or stop.
 
-- [ ] **T-072 · Write `client/Controllers/InstrumentController.luau`**  
+- [x] **T-072 · Write `client/Controllers/InstrumentController.luau`**  
   On `InputController` "Instrument" action: if instrument equipped, open `InstrumentUI`. On note button press: fire `Instrument_PlayNote`. On `Instrument_NoteRelay_S2C` received: play correct note sound via `SoundService` spatially at the source player's character position. Handle Strum (Siter/Angklung) and Sustain (Terompet) separately.  
   **Output:** Pressing note buttons fires remote and plays sound locally. Other players' notes play spatially. Sustain holds while button held.
 
-- [ ] **T-073 · Write `client/UI/InstrumentUI.luau`**  
+- [x] **T-073 · Write `client/UI/InstrumentUI.luau`**  
   `ScreenGui` with 5 note buttons (pentatonic: C D E G A labels). On mobile: large tap targets (min 80px), visible only in instrument mode. On PC: also show keyboard hints (Z X C V B). On console: D-pad mapped. Strum instruments show a single strum button. Angklung shows shake indicator on mobile.  
   **Output:** UI opens when instrument action triggered. All 3 platforms have usable controls. Gyro shake fires strum on mobile when enabled in settings.
 
-- [ ] **T-074 · Write Angklung gyro input**  
+- [x] **T-074 · Write Angklung gyro input**  
   In `InputController`: subscribe to `UserInputService.DeviceGravityChanged` (mobile only). Compute shake magnitude from delta gravity vector. If magnitude > 1.5 and cooldown > 0.3s elapsed: fire `Instrument_Strum` remote. Show visual shake cue on screen.  
   **Output:** Shaking phone plays Angklung note on mobile. Threshold prevents accidental triggers. 0.3s cooldown prevents spam.
 
@@ -745,7 +745,7 @@
 | Phase 8 — Spirits | T-051 → T-057 | 7 / 7 |
 | Phase 9 — Daily Tasks | T-058 → T-063 | 6 / 6 |
 | Phase 10 — Seasons | T-064 → T-069 | 6 / 6 |
-| Phase 11 — Instruments | T-070 → T-074 | 0 / 5 |
+| Phase 11 — Instruments | T-070 → T-074 | 5 / 5 |
 | Phase 12 — Emotes | T-075 → T-079 | 0 / 5 |
 | Phase 13 — Cosmetics | T-080 → T-085 | 0 / 6 |
 | Phase 14 — Sky's Peak | T-086 → T-089 | 0 / 4 |
@@ -759,4 +759,4 @@
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **70 / 144** |
+| **TOTAL** | | **75 / 144** |
