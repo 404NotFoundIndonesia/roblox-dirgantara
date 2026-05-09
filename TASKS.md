@@ -376,23 +376,23 @@
 
 ## Phase 12 — Emotes
 
-- [ ] **T-075 · Write `server/Services/EmoteService.luau` — play + relay**  
+- [x] **T-075 · Write `server/Services/EmoteService.luau` — play + relay**  
   On `Emote_PlayRequest { emoteId }`: validate ownership (`ownedItems[emoteId]`); emote in `equippedItems.emoteSlots`; not carrying or being carried. Fire `Emote_PlayRelay_S2C { userId, emoteId, isSynced = false }` to all players within 30 studs.  
   **Output:** Emote plays for nearby players. Non-owned or unequipped emotes rejected. Carry state blocks emote.
 
-- [ ] **T-076 · Write `EmoteService` — sync detection for bonded pairs**  
+- [x] **T-076 · Write `EmoteService` — sync detection for bonded pairs**  
   After `Emote_PlayRequest` fires for Player A: query `ikatanList[A]` for any partner within 15 studs currently playing the same `emoteId`. If found: fire `Emote_PlayRelay_S2C { isSynced = true }` to both with partner's ID; fire `Emote_SyncCheck_S2C { partnerId, emoteId }` to both.  
   **Output:** Bonded pair using same emote near each other triggers duo animation instead of solo.
 
-- [ ] **T-077 · Write `client/Controllers/EmoteController.luau`**  
+- [x] **T-077 · Write `client/Controllers/EmoteController.luau`**  
   On `Emote_PlayRelay_S2C`: find target character, load `AnimationTrack` from `CosmeticDefs[emoteId].assetId`. If `isSynced`: use `syncAnimationId` instead. Play on `Humanoid.Animator`. Track auto-stops at natural end.  
   **Output:** Emote animation plays on correct character. Synced animation plays when server flags it. No animation conflicts with flight.
 
-- [ ] **T-078 · Write `client/UI/EmoteWheel.luau`**  
+- [x] **T-078 · Write `client/UI/EmoteWheel.luau`**  
   Radial wheel with 8 slots. Opens on EmoteWheel action (Q / swipe-up / D-pad up). Shows equipped emote icons from `equippedItems.emoteSlots`. Hover/tap fires emote. Closes on action release (PC/console) or tap elsewhere (mobile). RTL-compatible (wheel position mirrors).  
   **Output:** Wheel opens, shows correct emotes, fires on selection, closes cleanly. Works on all 3 platforms.
 
-- [ ] **T-079 · Write emote slot management (Inventory Panel integration)**  
+- [x] **T-079 · Write emote slot management (Inventory Panel integration)**  
   In `InventoryPanel`: show owned emotes. Allow drag-to-slot (PC) or tap-select (mobile) to equip to one of 8 slots. Fire `Cosmetic_EquipRequest { slot = "emoteSlot_N", itemId }` to server. Server validates and updates `equippedItems.emoteSlots[N]`.  
   **Output:** Players can assign emotes to wheel slots. Changes persist in DataStore.
 
@@ -746,7 +746,7 @@
 | Phase 9 — Daily Tasks | T-058 → T-063 | 6 / 6 |
 | Phase 10 — Seasons | T-064 → T-069 | 6 / 6 |
 | Phase 11 — Instruments | T-070 → T-074 | 5 / 5 |
-| Phase 12 — Emotes | T-075 → T-079 | 0 / 5 |
+| Phase 12 — Emotes | T-075 → T-079 | 5 / 5 |
 | Phase 13 — Cosmetics | T-080 → T-085 | 0 / 6 |
 | Phase 14 — Sky's Peak | T-086 → T-089 | 0 / 4 |
 | Phase 15 — UI Layer | T-090 → T-101 | 0 / 12 |
@@ -759,4 +759,4 @@
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **75 / 144** |
+| **TOTAL** | | **80 / 144** |

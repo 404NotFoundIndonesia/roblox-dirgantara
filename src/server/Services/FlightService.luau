@@ -396,6 +396,15 @@ function FlightService.setKegelapan(player: Player, active: boolean)
 	_kegelapanFlag[player.UserId] = active
 end
 
+-- Called by EmoteService to block emote during carry
+function FlightService.isCarrying(player: Player): boolean
+	return _isCarrying[player.UserId] ~= nil
+end
+
+function FlightService.isCarried(player: Player): boolean
+	return _isCarried[player.UserId] ~= nil
+end
+
 -- ─── Service lifecycle ────────────────────────────────────────────────────────
 
 function FlightService.init(player: Player)
