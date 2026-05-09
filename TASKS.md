@@ -322,27 +322,27 @@
 
 ## Phase 10 — Season System
 
-- [ ] **T-064 · Write `server/Services/SeasonService.luau` — config loading**  
+- [x] **T-064 · Write `server/Services/SeasonService.luau` — config loading**  
   On startup: read `SeasonConfig_v1["active"]` via `DataService.readGlobal`. Store active `SeasonDef` in memory. Poll for updates every 5 minutes (to pick up season transitions without server restart). Expose `SeasonService.getActiveSeason(): SeasonDef`.  
   **Output:** All services can read current season config. Season change detected within 5 minutes across all servers.
 
-- [ ] **T-065 · Write `SeasonService` — realm extension activation**  
+- [x] **T-065 · Write `SeasonService` — realm extension activation**  
   On startup (and on season change): activate seasonal realm extension by calling `CollectionService:AddTag("SeasonArea_\{seasonId}", part)` for all relevant `BasePart`s in the seasonal extension folder. Deactivate previous season's extension. Parts without the tag remain hidden (handled by designers tagging parts correctly).  
   **Output:** Seasonal area becomes accessible when season activates. Previous season area deactivates.
 
-- [ ] **T-066 · Write `SeasonService` — season quest progress**  
+- [x] **T-066 · Write `SeasonService` — season quest progress**  
   Subscribe to BindableEvents matching each `SeasonQuest.completionEvent`. On event: find active season quest at current `step` for the player; increment `seasonQuestProgress[questId]`. On completion: fire `Season_QuestProgress_S2C { questId, progress }` to client; grant quest reward; advance quest pointer to next step.  
   **Output:** Quest chain advances step-by-step. Completion of step N unlocks step N+1. Rewards granted per step.
 
-- [ ] **T-067 · Write `SeasonService` — Koin Musim earn rate multiplier**  
+- [x] **T-067 · Write `SeasonService` — Koin Musim earn rate multiplier**  
   When `DailyTaskService` grants milestone rewards: call `SeasonService.getKoinMusimMultiplier(player)` → returns `2` if `seasonPassOwned`, else `1`. Multiply base Koin Musim earned. Add `koinMusim` increments via `DataService`.  
   **Output:** Pass owners earn double Koin Musim from daily tasks. Non-pass players earn base rate.
 
-- [ ] **T-068 · Write `SeasonService` — season end transition**  
+- [x] **T-068 · Write `SeasonService` — season end transition**  
   At `SeasonDef.endTimestamp`: set `seasonActive = false` internally. All `Spirit_FreeRequest` for season spirits rejected with `"Season has ended"`. New season `SeasonDef` loaded from DataStore. Fire `Season_StateSync_S2C` to all connected players with new season data.  
   **Output:** Old season spirits can no longer be freed. New season content activates. Owned cosmetics from old season remain.
 
-- [ ] **T-069 · Write `SeasonService` — Koin Musim Shop**  
+- [x] **T-069 · Write `SeasonService` — Koin Musim Shop**  
   Add `KoinShop_BuyItem` remote to `Remotes.luau`. On purchase request: validate `koinMusim >= item.price`; item not already owned; item exists in active season's `koinMusimShop`. Deduct Koin Musim, grant item via `CosmeticService`. Fire confirmation to client.  
   **Output:** Players can spend Koin Musim on seasonal items. Correct price deducted. Duplicate purchase blocked.
 
@@ -744,7 +744,7 @@
 | Phase 7 — Ikatan | T-046 → T-050 | 5 / 5 |
 | Phase 8 — Spirits | T-051 → T-057 | 7 / 7 |
 | Phase 9 — Daily Tasks | T-058 → T-063 | 6 / 6 |
-| Phase 10 — Seasons | T-064 → T-069 | 0 / 6 |
+| Phase 10 — Seasons | T-064 → T-069 | 6 / 6 |
 | Phase 11 — Instruments | T-070 → T-074 | 0 / 5 |
 | Phase 12 — Emotes | T-075 → T-079 | 0 / 5 |
 | Phase 13 — Cosmetics | T-080 → T-085 | 0 / 6 |
@@ -759,4 +759,4 @@
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **64 / 144** |
+| **TOTAL** | | **70 / 144** |

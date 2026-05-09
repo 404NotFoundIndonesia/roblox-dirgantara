@@ -29,6 +29,7 @@ local _InstrumentService: any = nil
 local _EmoteService:      any = nil
 local _FlightService:     any = nil
 local _SkysPeakService:   any = nil
+local _SeasonService:     any = nil
 
 local function getDS(): any
 	if not _DataService then
@@ -90,8 +91,20 @@ local function getSkysSvc(): any
 	end
 	return _SkysPeakService
 end
+local function getSeasonSvc(): any
+	if not _SeasonService then
+		_SeasonService = require(script.Parent.SeasonService)
+	end
+	return _SeasonService
+end
 
 local DailyTaskService = {}
+
+-- ─── BindableEvent ────────────────────────────────────────────────────────────
+
+local _dailyFullClearEvent = Instance.new("BindableEvent")
+_dailyFullClearEvent.Name  = "DailyFullClear"
+DailyTaskService.DailyFullClear = _dailyFullClearEvent
 
 -- ─── State ────────────────────────────────────────────────────────────────────
 
@@ -245,7 +258,8 @@ local function grantReward(player: Player, reward: Types.TaskReward)
 		})
 	end
 	if reward.koinMusim and reward.koinMusim > 0 then
-		data.koinMusim += reward.koinMusim
+		local mult = getSeasonSvc().getKoinMusimMultiplier(player)
+		data.koinMusim += reward.koinMusim * mult
 	end
 	if reward.fragmentItemId and reward.fragmentItemId ~= "" then
 		getCosmSvc().grantFragment(player, reward.fragmentItemId)
@@ -336,6 +350,9 @@ Remotes.DailyTask_ClaimMilestone.OnServerEvent:Connect(function(player: Player, 
 		if chestReward.fragmentItemId and chestReward.fragmentItemId ~= "" then
 			finalReward.fragmentItemId = chestReward.fragmentItemId
 		end
+
+		-- Signal full clear to SeasonService quest tracker
+		_dailyFullClearEvent:Fire(player)
 
 		-- Advance weekly full-clear counter
 		local weekNum = getWeekNumber()
