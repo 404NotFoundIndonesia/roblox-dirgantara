@@ -27,8 +27,17 @@
   **Output:** Any service can `require(shared.Types)` and use strict types. No `any` in type signatures.
 
 - [ ] **T-004 · Write `shared/Constants.luau`**  
-  Define all game constants as named values (no magic numbers anywhere else): `DAILY_CAHAYA_CAP = 150`, `MAX_IKATAN = 30`, `IKATAN_OFFER_TTL = 30`, `IKATAN_TELEPORT_COOLDOWN = 1800`, wing level caps, orb respawn time, zone ranges, rate limits, product IDs (stubs), sound asset IDs (stubs), daily task tier thresholds, chest reward weights, Awan XP values per action.  
+  Define all game constants as named values (no magic numbers anywhere else): `DAILY_CAHAYA_CAP = 150`, `MAX_IKATAN = 30`, `IKATAN_OFFER_TTL = 30`, `IKATAN_TELEPORT_COOLDOWN = 1800`, wing level caps, orb respawn time, zone ranges, rate limits, product IDs (stubs), daily task tier thresholds, chest reward weights, Awan XP values per action. Asset references must NOT go here — use `Assets.luau` instead.  
   **Output:** All subsequent modules import constants from here — no raw numbers in logic code.
+
+- [ ] **T-004b · Write `shared/Assets.luau` — asset ID config** ✅ *(file created, IDs pending)*  
+  Single source of truth for every asset reference in the game: icon image IDs, texture IDs, VFX model paths, SFX sound IDs, instrument note sound IDs (5 notes × 5 instruments), BGM track IDs, animation IDs, font asset IDs, model ReplicatedStorage paths, sprite sheet config. All unset assets default to `0` (numbers) or `""` (strings) as fill-in-later markers.  
+  No other file may hardcode an `rbxassetid://` string or a model path — all must go through `Assets.KEY`.  
+  **Output:** `Assets.SFX.OrbCollect`, `Assets.BGM.AmbientSolo`, `Assets.Animations.EmoteWave`, `Assets.Models.NagaGelap`, etc. all resolve correctly. Swapping any asset requires editing only this one file.
+
+- [ ] **T-004c · Populate `Assets.luau` with real asset IDs**  
+  Once artists/audio team deliver final assets, replace all `0` placeholder values with real Roblox asset IDs. Cover all 7 categories: Icons (~45 IDs), Textures (~15 IDs), SFX (~40 IDs), Instruments (25 note IDs + 3 variant IDs), BGM (~15 IDs), Animations (~30 IDs), Fonts (2 IDs). Update VFX model path strings to match final folder structure in `ReplicatedStorage`.  
+  **Output:** Zero `0` values remaining in `Assets.luau`. `ContentProvider:PreloadAsync()` on all asset IDs completes without errors.
 
 - [ ] **T-005 · Write `shared/WingDefs.luau`**  
   Define the `WingDef` table for all 10 wing levels (PRD §6.1) with `level`, `name`, `cahayaHatiCost`, `chargeSegments`, `canCarry`, `canEnterSkysPeak`.  
@@ -724,7 +733,7 @@
 
 | Phase | Tasks | Done |
 |---|---|---|
-| Phase 0 — Foundation | T-001 → T-013 | 0 / 13 |
+| Phase 0 — Foundation | T-001 → T-013, T-004b, T-004c | 0 / 15 |
 | Phase 1 — Data Layer | T-014 → T-018 | 0 / 5 |
 | Phase 2 — Flight | T-019 → T-025 | 0 / 7 |
 | Phase 3 — Cahaya | T-026 → T-031 | 0 / 6 |
@@ -749,4 +758,4 @@
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **0 / 142** |
+| **TOTAL** | | **0 / 144** |
