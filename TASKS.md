@@ -13,24 +13,25 @@
 
 ### T-000 · Project Scaffold
 
-- [ ] **T-001 · Create full folder structure**  
+- [x] **T-001 · Create full folder structure**  
   Create all directories and empty `.luau` stub files matching the structure in PRD §1.1:  
   `src/server/Services/`, `src/server/NPC/`, `src/client/Controllers/`, `src/client/UI/Components/`, `src/shared/`.  
   **Output:** Rojo syncs cleanly with no missing path errors. `default.project.json` paths all resolve.
 
-- [ ] **T-002 · Install Wally dependencies**  
+- [x] **T-002 · Install Wally dependencies**  
   Add all six packages to `wally.toml` (PRD §26): `evaera/promise`, `sleitnick/signal`, `sleitnick/component`, `evaera/maid`, `osyrisrblx/t`, `roblox/testez`. Run `wally install`.  
-  **Output:** `Packages/` and `ServerPackages/` populated. All packages importable via `require(Packages.Promise)` etc.
+  **Output:** `Packages/` and `ServerPackages/` populated. All packages importable via `require(Packages.Promise)` etc.  
+  *Note: Used available registry versions — Signal@2.0.3, Component@2.4.8, Maid→flamenco687/maid@3.2.2.*
 
-- [ ] **T-003 · Write `shared/Types.luau`**  
+- [x] **T-003 · Write `shared/Types.luau`**  
   Define and export every Luau type from PRD §2: `PlayerData`, `DailyTaskState`, `DailyTask`, `WeeklyState`, `MonthlyState`, `EquippedLoadout`, `SpiritDef`, `SpiritReward`, `WingDef`, `SeasonDef`, `SeasonQuest`, `CosmeticDef`, `TaskDef`, `TaskReward`.  
   **Output:** Any service can `require(shared.Types)` and use strict types. No `any` in type signatures.
 
-- [ ] **T-004 · Write `shared/Constants.luau`**  
+- [x] **T-004 · Write `shared/Constants.luau`**  
   Define all game constants as named values (no magic numbers anywhere else): `DAILY_CAHAYA_CAP = 150`, `MAX_IKATAN = 30`, `IKATAN_OFFER_TTL = 30`, `IKATAN_TELEPORT_COOLDOWN = 1800`, wing level caps, orb respawn time, zone ranges, rate limits, product IDs (stubs), daily task tier thresholds, chest reward weights, Awan XP values per action. Asset references must NOT go here — use `Assets.luau` instead.  
   **Output:** All subsequent modules import constants from here — no raw numbers in logic code.
 
-- [ ] **T-004b · Write `shared/Assets.luau` — asset ID config** ✅ *(file created, IDs pending)*  
+- [x] **T-004b · Write `shared/Assets.luau` — asset ID config** ✅ *(file created, IDs pending)*  
   Single source of truth for every asset reference in the game: icon image IDs, texture IDs, VFX model paths, SFX sound IDs, instrument note sound IDs (5 notes × 5 instruments), BGM track IDs, animation IDs, font asset IDs, model ReplicatedStorage paths, sprite sheet config. All unset assets default to `0` (numbers) or `""` (strings) as fill-in-later markers.  
   No other file may hardcode an `rbxassetid://` string or a model path — all must go through `Assets.KEY`.  
   **Output:** `Assets.SFX.OrbCollect`, `Assets.BGM.AmbientSolo`, `Assets.Animations.EmoteWave`, `Assets.Models.NagaGelap`, etc. all resolve correctly. Swapping any asset requires editing only this one file.
@@ -39,31 +40,31 @@
   Once artists/audio team deliver final assets, replace all `0` placeholder values with real Roblox asset IDs. Cover all 7 categories: Icons (~45 IDs), Textures (~15 IDs), SFX (~40 IDs), Instruments (25 note IDs + 3 variant IDs), BGM (~15 IDs), Animations (~30 IDs), Fonts (2 IDs). Update VFX model path strings to match final folder structure in `ReplicatedStorage`.  
   **Output:** Zero `0` values remaining in `Assets.luau`. `ContentProvider:PreloadAsync()` on all asset IDs completes without errors.
 
-- [ ] **T-005 · Write `shared/WingDefs.luau`**  
+- [x] **T-005 · Write `shared/WingDefs.luau`**  
   Define the `WingDef` table for all 10 wing levels (PRD §6.1) with `level`, `name`, `cahayaHatiCost`, `chargeSegments`, `canCarry`, `canEnterSkysPeak`.  
   **Output:** `WingDefs[level]` returns correct config for any wing level 1–10.
 
-- [ ] **T-006 · Write `shared/RealmDefs.luau`**  
+- [x] **T-006 · Write `shared/RealmDefs.luau`**  
   Define metadata for all 7 realms: `id`, `placeId` (stub), `nameKey`, `minWingLevel`, `kegelapanZoneCount`, `hasSeasonalExtension`.  
   **Output:** `RealmDefs["ISLE_DAWN"]` returns correct config. Wing gate lookup works.
 
-- [ ] **T-007 · Write `shared/SpiritDefs.luau`**  
+- [x] **T-007 · Write `shared/SpiritDefs.luau`**  
   Define `SpiritDef` entries for all Isle of Dawn Ancestor Spirits (3 stubs from GDD Appendix A) plus type definition. Include daily spirit type stubs. Full spirit roster populated per realm as content is built.  
   **Output:** `SpiritDefs["ISLE_WATCHER"]` returns a valid `SpiritDef`. Type errors caught at require time.
 
-- [ ] **T-008 · Write `shared/DailyTaskDefs.luau`**  
+- [x] **T-008 · Write `shared/DailyTaskDefs.luau`**  
   Define the full task pool: Easy (9 tasks), Medium (6 tasks), Hard (5 tasks) as `TaskDef` entries per PRD §11.1 table. Each entry has `id`, `difficulty`, `descriptionKey`, `target`, `trackingEvent`.  
   **Output:** Arrays `EasyPool`, `MediumPool`, `HardPool` exported. Seeded random picks from these produce valid `DailyTask` objects.
 
-- [ ] **T-009 · Write `shared/CosmeticDefs.luau`**  
+- [x] **T-009 · Write `shared/CosmeticDefs.luau`**  
   Define `CosmeticDef` entries for at minimum: 3 starter cosmetics (cape, emote, trail), 3 Isle of Dawn spirit rewards. Full roster populated as content is created.  
   **Output:** `CosmeticDefs["STARTER_CAPE"]` returns valid `CosmeticDef`. Category and rarity fields correct.
 
-- [ ] **T-010 · Write `shared/SeasonDefs.luau`**  
+- [x] **T-010 · Write `shared/SeasonDefs.luau`**  
   Define `SeasonDef` for Season 1 (Musim Hujan Bintang) with stub timestamps, spirit IDs, quest chain (7 steps), Koin Musim shop items.  
   **Output:** `SeasonDefs["SEASON_01_STARFALL"]` returns valid `SeasonDef`. Season timestamps are real UTC values.
 
-- [ ] **T-011 · Write `shared/Remotes.luau`**  
+- [x] **T-011 · Write `shared/Remotes.luau`**  
   Create all `RemoteEvent` and `RemoteFunction` instances (PRD §3.1–3.10, ~40 remotes). On server: create instances in `ReplicatedStorage.Remotes`. Export typed accessor functions so callers never reference remotes by raw string name.  
   **Output:** `Remotes.Cahaya_CollectOrb:FireServer(payload)` works from client. `Remotes.Cahaya_CollectOrb.OnServerEvent:Connect(fn)` works from server. All 40 remotes accessible.
 
@@ -71,11 +72,11 @@
 
 ### T-010 · Bootstrap
 
-- [ ] **T-012 · Write `server/init.server.luau`**  
+- [x] **T-012 · Write `server/init.server.luau`**  
   Require and boot all services in the order defined in PRD §1.3. Connect `Players.PlayerAdded` → call `service.init(player)` for each service in order. Connect `Players.PlayerRemoving` → call `service.cleanup(player)` + `DataService.save(player)`.  
   **Output:** Server boots without errors. Joining player triggers `init()` on all services in correct order. Leaving player triggers `cleanup()` + save.
 
-- [ ] **T-013 · Write `client/init.client.luau`**  
+- [x] **T-013 · Write `client/init.client.luau`**  
   Require and boot all controllers: `InputController` → `UIController` → `FlightController` → `CameraController` → `AudioController` → `CosmeticController` → `InstrumentController` → `EmoteController`. Wait for character load before starting gameplay controllers.  
   **Output:** Client starts without errors. All controllers initialized before player can interact.
 
