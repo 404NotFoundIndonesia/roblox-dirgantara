@@ -500,15 +500,15 @@
 
 ## Phase 16 — Input Abstraction
 
-- [ ] **T-102 · Write `client/Controllers/InputController.luau` — platform detection + binding**  
+- [x] **T-102 · Write `client/Controllers/InputController.luau` — platform detection + binding**  
   On init: detect platform (`TouchEnabled`, `GamepadEnabled`). Build action binding map per PRD §18.4 table. `InputController.onAction(actionId, callback)` pub/sub. `InputController.offAction(actionId, callback)` cleanup.  
   **Output:** Any controller subscribes to an action ID. Platform-specific input correctly maps to shared action IDs. Adding new platforms requires changing only `InputController`.
 
-- [ ] **T-103 · Write `InputController` — double-tap detection (mobile)**  
+- [x] **T-103 · Write `InputController` — double-tap detection (mobile)**  
   Track last FlyBoost tap timestamp. If second tap within 250ms: fire FlyBoost action. Prevent accidental triggers (require tap to land within 48px of button center).  
   **Output:** Double-tap reliably triggers boost on mobile without interfering with single-tap.
 
-- [ ] **T-104 · Write `InputController` — gamepad deadzone + analog normalization**  
+- [x] **T-104 · Write `InputController` — gamepad deadzone + analog normalization**  
   Apply 0.2 deadzone to left stick. Normalize to 0→1 range after deadzone. Pass normalized value to `FlightController` for movement direction. Right stick drives camera in `CameraController`.  
   **Output:** Gamepad movement feels smooth with no drift in neutral position. Analog values correctly normalized.
 
@@ -750,7 +750,7 @@
 | Phase 13 — Cosmetics | T-080 → T-085 | 6 / 6 |
 | Phase 14 — Sky's Peak | T-086 → T-089 | 4 / 4 |
 | Phase 15 — UI Layer | T-090 → T-101 | 12 / 12 |
-| Phase 16 — Input | T-102 → T-104 | 0 / 3 |
+| Phase 16 — Input | T-102 → T-104 | 3 / 3 |
 | Phase 17 — Audio | T-105 → T-106 | 0 / 2 |
 | Phase 18 — Localization | T-107 → T-112 | 0 / 6 |
 | Phase 19 — Monetization | T-113 → T-118 | 0 / 6 |
@@ -759,4 +759,4 @@
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **102 / 144** |
+| **TOTAL** | | **105 / 144** |

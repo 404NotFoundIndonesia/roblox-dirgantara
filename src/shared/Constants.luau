@@ -9,6 +9,11 @@ local Types = require(script.Parent.Types)
 
 local Constants = {}
 
+-- ─── Input action IDs (FR-INP-02) ────────────────────────────────────────────
+export type ActionId =
+	"FlyBoost" | "Interact" | "EmoteWheel" | "Instrument" |
+	"Map" | "Menu" | "DimLight" | "CarryBail"
+
 -- ─── Schema ───────────────────────────────────────────────────────────────────
 Constants.SCHEMA_VERSION = 1
 
@@ -203,6 +208,10 @@ Constants.RATE_SECOND_OFFENSE_WINDOW = 60    -- seconds; second violation in thi
 Constants.STREAM_RADIUS_PC     = 256    -- studs
 Constants.STREAM_RADIUS_MOBILE = 192    -- studs
 Constants.LOW_QUALITY_THRESHOLD = 3     -- QualityLevel at or below disables non-essential particles
+
+-- ─── Input ───────────────────────────────────────────────────────────────────
+Constants.INPUT_DOUBLE_TAP_WINDOW = 0.25   -- seconds; mobile FlyBoost double-tap threshold
+Constants.GAMEPAD_DEADZONE        = 0.2    -- left/right stick deadzone (0→1)
 
 -- ─── UI ──────────────────────────────────────────────────────────────────────
 Constants.UI_SCALE_MIN      = 0.75
