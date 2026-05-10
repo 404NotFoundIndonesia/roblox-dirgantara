@@ -23,12 +23,13 @@ local ReplicatedStorage  = game:GetService("ReplicatedStorage")
 
 local Shared      = ReplicatedStorage:WaitForChild("Shared")
 local Packages    = ReplicatedStorage:WaitForChild("Packages")
-local Constants   = require(Shared.Constants)
-local SpiritDefs  = require(Shared.SpiritDefs)
-local RealmDefs   = require(Shared.RealmDefs)
-local Remotes     = require(Shared.Remotes)
-local RateLimiter = require(Shared.RateLimiter)
-local t           = require(Packages.t)
+local Constants    = require(Shared.Constants)
+local SpiritDefs   = require(Shared.SpiritDefs)
+local RealmDefs    = require(Shared.RealmDefs)
+local Remotes      = require(Shared.Remotes)
+local RateLimiter  = require(Shared.RateLimiter)
+local t            = require(Packages.t)
+local RemoteUtils  = require(script.Parent.Parent.RemoteUtils)
 
 -- Lazy-require sibling services
 local _DataService:     any = nil
@@ -313,7 +314,7 @@ Remotes.Spirit_CollectFragment.OnServerEvent:Connect(function(player: any, paylo
 	end
 	_collectedFragments[userId][spiritId][fragmentIndex] = true
 
-	Remotes.Spirit_FragmentConfirm_S2C:FireClient(player :: Player, {
+	RemoteUtils.fireClient(Remotes.Spirit_FragmentConfirm_S2C, player :: Player, {
 		spiritId      = spiritId,
 		fragmentIndex = fragmentIndex,
 	})
@@ -351,13 +352,13 @@ Remotes.Spirit_FreeRequest.OnServerEvent:Connect(function(player: any, payload: 
 
 	-- Already freed
 	if data.freedSpiritIds[spiritId] or data.freedSeasonSpiritIds[spiritId] then
-		Remotes.Spirit_FreeResult_S2C:FireClient(player :: Player, { success = false })
+		RemoteUtils.fireClient(Remotes.Spirit_FreeResult_S2C, player :: Player, { success = false })
 		return
 	end
 
 	-- Season pass gate
 	if def.spiritType == "Season" and not data.seasonPassOwned then
-		Remotes.Spirit_FreeResult_S2C:FireClient(player :: Player, { success = false })
+		RemoteUtils.fireClient(Remotes.Spirit_FreeResult_S2C, player :: Player, { success = false })
 		return
 	end
 
@@ -370,7 +371,7 @@ Remotes.Spirit_FreeRequest.OnServerEvent:Connect(function(player: any, payload: 
 		end
 	end
 	if collected < def.fragmentCount then
-		Remotes.Spirit_FreeResult_S2C:FireClient(player :: Player, { success = false })
+		RemoteUtils.fireClient(Remotes.Spirit_FreeResult_S2C, player :: Player, { success = false })
 		return
 	end
 
@@ -385,7 +386,7 @@ Remotes.Spirit_FreeRequest.OnServerEvent:Connect(function(player: any, payload: 
 	getCS().add(player :: Player, def.reward.cahaya)
 
 	data.cahayaHati += def.reward.cahayaHati
-	Remotes.Cahaya_SyncState_S2C:FireClient(player :: Player, {
+	RemoteUtils.fireClient(Remotes.Cahaya_SyncState_S2C, player :: Player, {
 		cahaya     = data.cahaya,
 		cahayaHati = data.cahayaHati,
 	})
@@ -396,7 +397,7 @@ Remotes.Spirit_FreeRequest.OnServerEvent:Connect(function(player: any, payload: 
 
 	getWS().awardAwanXP(player :: Player, SPIRIT_AWAN_XP)
 
-	Remotes.Spirit_FreeResult_S2C:FireClient(player :: Player, {
+	RemoteUtils.fireClient(Remotes.Spirit_FreeResult_S2C, player :: Player, {
 		success = true,
 		reward  = def.reward,
 	})
@@ -461,11 +462,11 @@ Remotes.Spirit_TouchDaily.OnServerEvent:Connect(function(player: any, payload: a
 	data.cahayaHati += DAILY_CAHAYAHATI_REWARD
 	table.insert(data.dailySpiritsTouched, spiritId)
 
-	Remotes.Cahaya_SyncState_S2C:FireClient(player :: Player, {
+	RemoteUtils.fireClient(Remotes.Cahaya_SyncState_S2C, player :: Player, {
 		cahaya     = data.cahaya,
 		cahayaHati = data.cahayaHati,
 	})
-	Remotes.Spirit_DailyResult_S2C:FireClient(player :: Player, {
+	RemoteUtils.fireClient(Remotes.Spirit_DailyResult_S2C, player :: Player, {
 		cahayaGained     = DAILY_CAHAYA_REWARD,
 		cahayaHatiGained = DAILY_CAHAYAHATI_REWARD,
 	})
@@ -503,14 +504,14 @@ Remotes.Spirit_ToggleCompanion.OnServerEvent:Connect(function(player: any, paylo
 
 		-- Dismiss previous companion on client if switching
 		if current then
-			Remotes.Spirit_CompanionState_S2C:FireClient(player :: Player, {
+			RemoteUtils.fireClient(Remotes.Spirit_CompanionState_S2C, player :: Player, {
 				spiritId = current,
 				active   = false,
 			})
 		end
 	end
 
-	Remotes.Spirit_CompanionState_S2C:FireClient(player :: Player, {
+	RemoteUtils.fireClient(Remotes.Spirit_CompanionState_S2C, player :: Player, {
 		spiritId = spiritId,
 		active   = active,
 	})

@@ -24,9 +24,11 @@ local Constants    = require(Shared.Constants)
 local CosmeticDefs = require(Shared.CosmeticDefs)
 local SpiritDefs   = require(Shared.SpiritDefs)
 local Remotes      = require(Shared.Remotes)
+local RetryAsync   = require(Shared.RetryAsync)
 local Types        = require(Shared.Types)
 local RateLimiter  = require(Shared.RateLimiter)
 local t            = require(Packages.t)
+local RemoteUtils  = require(script.Parent.Parent.RemoteUtils)
 
 -- ─── Lazy-requires (avoid circular deps) ─────────────────────────────────────
 
@@ -108,7 +110,7 @@ type GrantFn = (player: Player, data: Types.PlayerData) -> ()
 local function handleMusimPass(player: Player, data: Types.PlayerData)
 	data.seasonPassOwned = true
 	grantSeasonCosmetics(player, data.activeSeasonId)
-	Remotes.Monetization_PassSync_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Monetization_PassSync_S2C, player, {
 		seasonPassOwned     = true,
 		seasonPassPlusOwned = data.seasonPassPlusOwned,
 	})
@@ -139,7 +141,7 @@ local function handleMusimPassPlus(player: Player, data: Types.PlayerData)
 		end
 	end
 
-	Remotes.Monetization_PassSync_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Monetization_PassSync_S2C, player, {
 		seasonPassOwned     = true,
 		seasonPassPlusOwned = true,
 	})
@@ -186,11 +188,16 @@ type PendingGrant = { productId: number, purchaseId: string }
 
 -- Append a grant to the pending queue using UpdateAsync (concurrent-safe).
 local function enqueueGrant(userId: number, productId: number, purchaseId: string)
-	_grantsStore:UpdateAsync(tostring(userId), function(current: any): any
-		local list: { PendingGrant } = current or {}
-		table.insert(list, { productId = productId, purchaseId = purchaseId })
-		return list
-	end)
+	local ok, _ = RetryAsync.run(function()
+		_grantsStore:UpdateAsync(tostring(userId), function(current: any): any
+			local list: { PendingGrant } = current or {}
+			table.insert(list, { productId = productId, purchaseId = purchaseId })
+			return list
+		end)
+	end, Constants.DS_MAX_RETRIES, Constants.DS_RETRY_DELAY)
+	if not ok then
+		warn("[MonetizationService] enqueueGrant failed for userId", userId)
+	end
 end
 
 -- Apply any queued grants for a player, then clear the queue.
@@ -200,9 +207,9 @@ function MonetizationService.applyPendingGrants(player: Player)
 	if not data or data.dataLoadFailed then return end
 
 	local key = tostring(player.UserId)
-	local ok, raw = pcall(function(): any
+	local ok, raw = RetryAsync.run(function(): any
 		return _grantsStore:GetAsync(key)
-	end)
+	end, Constants.DS_MAX_RETRIES, Constants.DS_RETRY_DELAY)
 	if not ok or raw == nil then return end
 
 	local grants = raw :: { PendingGrant }
@@ -211,9 +218,9 @@ function MonetizationService.applyPendingGrants(player: Player)
 	local handlers = getHandlers()
 	for _, grant in grants do
 		-- Skip if purchase history already marks this receipt as processed.
-		local histOk, histVal = pcall(function(): any
+		local histOk, histVal = RetryAsync.run(function(): any
 			return _histStore:GetAsync(grant.purchaseId)
-		end)
+		end, Constants.DS_MAX_RETRIES, Constants.DS_RETRY_DELAY)
 		if histOk and histVal == true then
 			continue
 		end
@@ -229,29 +236,38 @@ function MonetizationService.applyPendingGrants(player: Player)
 		end
 
 		-- Mark receipt processed.
-		pcall(function()
+		local setOk, _ = RetryAsync.run(function()
 			_histStore:SetAsync(grant.purchaseId, true)
-		end)
+		end, Constants.DS_MAX_RETRIES, Constants.DS_RETRY_DELAY)
+		if not setOk then
+			warn("[MonetizationService] applyPendingGrants: SetAsync failed for", grant.purchaseId)
+		end
 	end
 
 	-- Clear the entire queue after processing.
-	pcall(function()
+	local clearOk, _ = RetryAsync.run(function()
 		_grantsStore:UpdateAsync(key, function(_: any): any
 			return nil
 		end)
-	end)
+	end, Constants.DS_MAX_RETRIES, Constants.DS_RETRY_DELAY)
+	if not clearOk then
+		warn("[MonetizationService] applyPendingGrants: clear queue failed for userId", player.UserId)
+	end
 end
 
 -- ─── T-113: ProcessReceipt ────────────────────────────────────────────────────
 
 MarketplaceService.ProcessReceipt = function(receiptInfo: { [string]: any })
-	local purchaseId = tostring(receiptInfo.PurchaseId)
-	local productId  = receiptInfo.ProductId :: number
-	local userId     = receiptInfo.PlayerId  :: number
-
 	local ok, err = pcall(function()
+		local purchaseId = tostring(receiptInfo.PurchaseId)
+		local productId  = receiptInfo.ProductId :: number
+		local userId     = receiptInfo.PlayerId  :: number
+
 		-- ── Idempotency: skip if already processed ─────────────────────────
-		if _histStore:GetAsync(purchaseId) == true then
+		local histOk, alreadyProcessed = RetryAsync.run(function(): any
+			return _histStore:GetAsync(purchaseId)
+		end, Constants.DS_MAX_RETRIES, Constants.DS_RETRY_DELAY)
+		if histOk and alreadyProcessed == true then
 			return
 		end
 
@@ -260,7 +276,12 @@ MarketplaceService.ProcessReceipt = function(receiptInfo: { [string]: any })
 		if not player then
 			-- T-116: player offline — queue grant and mark receipt processed.
 			enqueueGrant(userId, productId, purchaseId)
-			_histStore:SetAsync(purchaseId, true)
+			local setOk, _ = RetryAsync.run(function()
+				_histStore:SetAsync(purchaseId, true)
+			end, Constants.DS_MAX_RETRIES, Constants.DS_RETRY_DELAY)
+			if not setOk then
+				warn("[ProcessReceipt] SetAsync failed for purchaseId:", purchaseId)
+			end
 			return
 		end
 
@@ -276,13 +297,18 @@ MarketplaceService.ProcessReceipt = function(receiptInfo: { [string]: any })
 			warn("[MonetizationService] ProcessReceipt: no handler for productId", productId)
 		end
 
-		_histStore:SetAsync(purchaseId, true)
+		local setOk, _ = RetryAsync.run(function()
+			_histStore:SetAsync(purchaseId, true)
+		end, Constants.DS_MAX_RETRIES, Constants.DS_RETRY_DELAY)
+		if not setOk then
+			warn("[ProcessReceipt] SetAsync failed for purchaseId:", purchaseId)
+		end
 	end)
 
 	if ok then
 		return Enum.ProductPurchaseDecision.PurchaseGranted
 	end
-	warn("[MonetizationService] ProcessReceipt error:", tostring(err))
+	warn("[ProcessReceipt] Error for purchaseId:", receiptInfo.PurchaseId, err)
 	return Enum.ProductPurchaseDecision.NotProcessedYet
 end
 

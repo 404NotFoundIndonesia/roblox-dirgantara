@@ -18,11 +18,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared      = ReplicatedStorage:WaitForChild("Shared")
 local Packages    = ReplicatedStorage:WaitForChild("Packages")
-local Constants   = require(Shared.Constants)
-local Remotes     = require(Shared.Remotes)
-local Types       = require(Shared.Types)
-local RateLimiter = require(Shared.RateLimiter)
-local t           = require(Packages.t)
+local Constants    = require(Shared.Constants)
+local Remotes      = require(Shared.Remotes)
+local Types        = require(Shared.Types)
+local RateLimiter  = require(Shared.RateLimiter)
+local t            = require(Packages.t)
+local RemoteUtils  = require(script.Parent.Parent.RemoteUtils)
 
 -- ─── Lazy-requires ────────────────────────────────────────────────────────────
 
@@ -158,7 +159,7 @@ Remotes.Emote_PlayRequest.OnServerEvent:Connect(function(player: Player, payload
 	-- T-075: relay to nearby players (isSynced = false)
 	local nearby = getNearbyPlayers(player, Constants.EMOTE_RELAY_RANGE)
 	for _, other in nearby do
-		Remotes.Emote_PlayRelay_S2C:FireClient(other, {
+		RemoteUtils.fireClient(Remotes.Emote_PlayRelay_S2C, other, {
 			userId   = userId,
 			emoteId  = emoteId,
 			isSynced = false,
@@ -179,17 +180,17 @@ Remotes.Emote_PlayRequest.OnServerEvent:Connect(function(player: Player, payload
 		local syncPayloadA = { userId = userId,      emoteId = emoteId, isSynced = true }
 		local syncPayloadB = { userId = partnerId,   emoteId = emoteId, isSynced = true }
 
-		Remotes.Emote_PlayRelay_S2C:FireClient(player,      syncPayloadA)
-		Remotes.Emote_PlayRelay_S2C:FireClient(syncPartner, syncPayloadA)
-		Remotes.Emote_PlayRelay_S2C:FireClient(player,      syncPayloadB)
-		Remotes.Emote_PlayRelay_S2C:FireClient(syncPartner, syncPayloadB)
+		RemoteUtils.fireClient(Remotes.Emote_PlayRelay_S2C, player,      syncPayloadA)
+		RemoteUtils.fireClient(Remotes.Emote_PlayRelay_S2C, syncPartner, syncPayloadA)
+		RemoteUtils.fireClient(Remotes.Emote_PlayRelay_S2C, player,      syncPayloadB)
+		RemoteUtils.fireClient(Remotes.Emote_PlayRelay_S2C, syncPartner, syncPayloadB)
 
 		-- Notify each player who their sync partner is
-		Remotes.Emote_SyncCheck_S2C:FireClient(player, {
+		RemoteUtils.fireClient(Remotes.Emote_SyncCheck_S2C, player, {
 			partnerId = partnerId,
 			emoteId   = emoteId,
 		})
-		Remotes.Emote_SyncCheck_S2C:FireClient(syncPartner, {
+		RemoteUtils.fireClient(Remotes.Emote_SyncCheck_S2C, syncPartner, {
 			partnerId = userId,
 			emoteId   = emoteId,
 		})

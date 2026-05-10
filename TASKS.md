@@ -636,19 +636,19 @@
 
 ## Phase 23 — Error Handling & DataStore Reliability
 
-- [ ] **T-129 · Wrap all DataStore calls in `retryAsync`**  
+- [x] **T-129 · Wrap all DataStore calls in `retryAsync`**  
   Audit every `GetAsync`, `SetAsync`, `UpdateAsync`, `IncrementAsync` call. All must go through `retryAsync(fn, 5, 2)`. No bare DataStore calls anywhere.  
   **Output:** DataStore failures auto-retry 5 times. Permanent failure logs with `warn()`. No unhandled errors crash the server.
 
-- [ ] **T-130 · Implement blank-state fallback**  
+- [x] **T-130 · Implement blank-state fallback**  
   In `DataService.load(player)`: if all 5 retries fail, set `dataLoadFailed = true` on the session data object. In `DataService.cleanup(player)`: if `dataLoadFailed == true`, skip save (do not overwrite). Show `UI_TOAST_DATA_LOAD_ERROR` toast on client (fire a `DataService_LoadError_S2C` remote).  
   **Output:** Player can still join and play with default state. Their real data is not overwritten on exit.
 
-- [ ] **T-131 · Wrap all `FireClient` in `pcall`**  
+- [x] **T-131 · Wrap all `FireClient` in `pcall`**  
   Audit every `RemoteEvent:FireClient` and `RemoteEvent:FireAllClients` call in server code. Wrap each in `pcall`. Log any error with `warn("[RemoteName] FireClient error: ", err)`.  
   **Output:** A disconnecting client does not crash a server `FireClient` loop. Server continues running for other players.
 
-- [ ] **T-132 · Wrap `ProcessReceipt` in `pcall`**  
+- [x] **T-132 · Wrap `ProcessReceipt` in `pcall`**  
   The `MarketplaceService.ProcessReceipt` callback body must be fully wrapped in `pcall`. Any error: log with `warn("[ProcessReceipt] Error for purchaseId:", receiptInfo.PurchaseId, err)`, return `NotProcessedYet`.  
   **Output:** Failed receipts do not crash the server and are retried by Roblox automatically.
 
@@ -757,6 +757,6 @@
 | Phase 20 — Multi-Place | T-119 → T-121 | 3 / 3 |
 | Phase 21 — Security | T-122 → T-125 | 4 / 4 |
 | Phase 22 — Performance | T-126 → T-128 | 3 / 3 |
-| Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
+| Phase 23 — Error Handling | T-129 → T-132 | 4 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **129 / 144** |
+| **TOTAL** | | **133 / 144** |

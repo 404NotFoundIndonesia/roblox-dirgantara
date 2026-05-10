@@ -23,11 +23,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared      = ReplicatedStorage:WaitForChild("Shared")
 local Packages    = ReplicatedStorage:WaitForChild("Packages")
-local Constants   = require(Shared.Constants)
-local WingDefs    = require(Shared.WingDefs)
-local Remotes     = require(Shared.Remotes)
-local RateLimiter = require(Shared.RateLimiter)
-local t           = require(Packages.t)
+local Constants    = require(Shared.Constants)
+local WingDefs     = require(Shared.WingDefs)
+local Remotes      = require(Shared.Remotes)
+local RateLimiter  = require(Shared.RateLimiter)
+local t            = require(Packages.t)
+local RemoteUtils  = require(script.Parent.Parent.RemoteUtils)
 
 -- DataService required lazily to avoid load-order issues
 local _DataService: any = nil
@@ -109,7 +110,7 @@ local function syncCharge(player: Player, granted: boolean)
 	local floor  = math.floor(state.current)
 	if floor == _lastSentCharge[userId] and not granted then return end
 	_lastSentCharge[userId] = floor
-	Remotes.Flight_BoostResult_S2C:FireClient(player, { granted = granted, newCharge = floor })
+	RemoteUtils.fireClient(Remotes.Flight_BoostResult_S2C, player, { granted = granted, newCharge = floor })
 end
 
 -- Compute combined refill rate (seg/sec) for a player this Heartbeat frame.
@@ -177,10 +178,10 @@ local function endCarry(carrierId: number, carriedId: number)
 	local carrier = _players[carrierId]
 	local carried = _players[carriedId]
 	if carrier then
-		Remotes.Flight_CarryState_S2C:FireClient(carrier, payload)
+		RemoteUtils.fireClient(Remotes.Flight_CarryState_S2C, carrier, payload)
 	end
 	if carried then
-		Remotes.Flight_CarryState_S2C:FireClient(carried, payload)
+		RemoteUtils.fireClient(Remotes.Flight_CarryState_S2C, carried, payload)
 	end
 end
 
@@ -220,14 +221,14 @@ Remotes.Flight_RequestBoost.OnServerEvent:Connect(function(player: Player, paylo
 
 	-- Validate charge
 	if math.floor(state.current) < cost then
-		Remotes.Flight_BoostResult_S2C:FireClient(player, { granted = false, newCharge = math.floor(state.current) })
+		RemoteUtils.fireClient(Remotes.Flight_BoostResult_S2C, player, { granted = false, newCharge = math.floor(state.current) })
 		return
 	end
 
 	-- Validate submitted position
 	local newPos = payload and payload.position
 	if typeof(newPos) ~= "Vector3" then
-		Remotes.Flight_BoostResult_S2C:FireClient(player, { granted = false, newCharge = math.floor(state.current) })
+		RemoteUtils.fireClient(Remotes.Flight_BoostResult_S2C, player, { granted = false, newCharge = math.floor(state.current) })
 		return
 	end
 
@@ -242,7 +243,7 @@ Remotes.Flight_RequestBoost.OnServerEvent:Connect(function(player: Player, paylo
 			if char and char.PrimaryPart then
 				char:PivotTo(CFrame.new(lastPos))
 			end
-			Remotes.Flight_BoostResult_S2C:FireClient(player, { granted = false, newCharge = math.floor(state.current) })
+			RemoteUtils.fireClient(Remotes.Flight_BoostResult_S2C, player, { granted = false, newCharge = math.floor(state.current) })
 			return
 		end
 	end
@@ -251,7 +252,7 @@ Remotes.Flight_RequestBoost.OnServerEvent:Connect(function(player: Player, paylo
 	state.current    -= cost
 	_lastValidPos[userId] = newPos
 	_lastSentCharge[userId] = math.floor(state.current)
-	Remotes.Flight_BoostResult_S2C:FireClient(player, { granted = true, newCharge = math.floor(state.current) })
+	RemoteUtils.fireClient(Remotes.Flight_BoostResult_S2C, player, { granted = true, newCharge = math.floor(state.current) })
 end)
 
 -- ─── T-023: Carry mechanic ────────────────────────────────────────────────────
@@ -287,7 +288,7 @@ Remotes.Flight_CarryRequest.OnServerEvent:Connect(function(carrier: Player, payl
 
 	-- Store pending offer and notify target
 	_pendingOffer[targetId] = carrierId
-	Remotes.Flight_CarryState_S2C:FireClient(target, {
+	RemoteUtils.fireClient(Remotes.Flight_CarryState_S2C, target, {
 		carrierId = carrierId,
 		carriedId = targetId,
 		active    = false,  -- false = offer (no weld yet)
@@ -331,8 +332,8 @@ Remotes.Flight_CarryAccept.OnServerEvent:Connect(function(carried: Player, paylo
 	_isCarried[carriedId]  = carrierId
 
 	local payload2 = { carrierId = carrierId, carriedId = carriedId, active = true }
-	Remotes.Flight_CarryState_S2C:FireClient(carrier, payload2)
-	Remotes.Flight_CarryState_S2C:FireClient(carried, payload2)
+	RemoteUtils.fireClient(Remotes.Flight_CarryState_S2C, carrier, payload2)
+	RemoteUtils.fireClient(Remotes.Flight_CarryState_S2C, carried, payload2)
 end)
 
 Remotes.Flight_CarryEnd.OnServerEvent:Connect(function(player: Player)

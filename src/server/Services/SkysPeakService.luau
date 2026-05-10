@@ -26,6 +26,7 @@ local Remotes      = require(Shared.Remotes)
 local Types        = require(Shared.Types)
 local RealmDefs    = require(Shared.RealmDefs)
 local RateLimiter  = require(Shared.RateLimiter)
+local RemoteUtils  = require(script.Parent.Parent.RemoteUtils)
 
 -- ─── Lazy-requires ────────────────────────────────────────────────────────────
 
@@ -194,7 +195,7 @@ local function onSacrificeComplete(player: Player)
 	data.cahayaHati += Constants.SKYS_PEAK_CAHAYA_HATI_REWARD
 
 	-- Sync economy to client
-	Remotes.Cahaya_SyncState_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Cahaya_SyncState_S2C, player, {
 		cahaya     = data.cahaya,
 		cahayaHati = data.cahayaHati,
 	})
@@ -213,7 +214,7 @@ local function onSacrificeComplete(player: Player)
 		badgeId          = badgeId,
 	}
 
-	Remotes.SkysPeak_CycleComplete_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.SkysPeak_CycleComplete_S2C, player, {
 		cyclesTotal = cycleNumber,
 		reward      = reward,
 	})
@@ -279,7 +280,7 @@ RunService.Heartbeat:Connect(function(dt: number)
 			if dist <= SUMMIT_TRIGGER_RADIUS then
 				_states[userId] = "SUMMIT"
 
-				Remotes.SkysPeak_SummitReached_S2C:FireClient(player, {})
+				RemoteUtils.fireClient(Remotes.SkysPeak_SummitReached_S2C, player, {})
 
 				-- Fire BindableEvent for SeasonService / DailyTaskService
 				_skysPeakReachedEvent:Fire(player)

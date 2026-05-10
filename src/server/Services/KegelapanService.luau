@@ -32,10 +32,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared      = ReplicatedStorage:WaitForChild("Shared")
 local Packages    = ReplicatedStorage:WaitForChild("Packages")
-local Constants   = require(Shared.Constants)
-local Remotes     = require(Shared.Remotes)
-local RateLimiter = require(Shared.RateLimiter)
-local t           = require(Packages.t)
+local Constants    = require(Shared.Constants)
+local Remotes      = require(Shared.Remotes)
+local RateLimiter  = require(Shared.RateLimiter)
+local t            = require(Packages.t)
+local RemoteUtils  = require(script.Parent.Parent.RemoteUtils)
 
 -- Lazy-require services
 local _DataService:    any = nil
@@ -233,7 +234,7 @@ RunService.Heartbeat:Connect(function(dt: number)
 				getFS().setKegelapan(player, true)
 				getNGA().onPlayerEnterZone(player, zoneId, zone.part)
 
-				Remotes.Kegelapan_ZoneState_S2C:FireClient(player, {
+				RemoteUtils.fireClient(Remotes.Kegelapan_ZoneState_S2C, player, {
 					zoneId  = zoneId,
 					entered = true,
 				})
@@ -258,7 +259,7 @@ RunService.Heartbeat:Connect(function(dt: number)
 					getFS().setKegelapan(player, false)
 				end
 
-				Remotes.Kegelapan_ZoneState_S2C:FireClient(player, {
+				RemoteUtils.fireClient(Remotes.Kegelapan_ZoneState_S2C, player, {
 					zoneId  = zoneId,
 					entered = false,
 				})
@@ -288,7 +289,7 @@ Remotes.Kegelapan_DimRequest.OnServerEvent:Connect(function(player: Player)
 	local hrp  = if char then char:FindFirstChild("HumanoidRootPart") :: BasePart? else nil
 
 	-- Fire to self with own state (no userId in payload for self)
-	Remotes.Kegelapan_DimState_S2C:FireClient(player, { dimmed = dimmed })
+	RemoteUtils.fireClient(Remotes.Kegelapan_DimState_S2C, player, { dimmed = dimmed })
 
 	-- Fire to nearby players so they can show the dim visual on this character
 	if not hrp then return end
@@ -299,7 +300,7 @@ Remotes.Kegelapan_DimRequest.OnServerEvent:Connect(function(player: Player)
 		local otherHRP = otherChar:FindFirstChild("HumanoidRootPart") :: BasePart?
 		if not otherHRP then continue end
 		if (otherHRP.Position - hrp.Position).Magnitude <= DIM_NEARBY_RANGE then
-			Remotes.Kegelapan_DimState_S2C:FireClient(other, {
+			RemoteUtils.fireClient(Remotes.Kegelapan_DimState_S2C, other, {
 				dimmed = dimmed,
 				userId = player.UserId,   -- lets the client identify WHICH character to dim
 			})
@@ -349,7 +350,7 @@ Remotes.PetiCahaya_Open.OnServerEvent:Connect(function(player: Player, payload: 
 	data.openedChests[chestId] = true
 
 	-- Sync Cahaya to client HUD
-	Remotes.Cahaya_SyncState_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Cahaya_SyncState_S2C, player, {
 		cahaya     = data.cahaya,
 		cahayaHati = data.cahayaHati,
 	})

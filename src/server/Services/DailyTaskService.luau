@@ -19,6 +19,7 @@ local DailyTaskDefs = require(Shared.DailyTaskDefs)
 local Types         = require(Shared.Types)
 local RateLimiter   = require(Shared.RateLimiter)
 local t             = require(Packages.t)
+local RemoteUtils   = require(script.Parent.Parent.RemoteUtils)
 
 -- ─── Lazy-requires ────────────────────────────────────────────────────────────
 
@@ -244,7 +245,7 @@ local function handleEvent(player: Player, eventName: string, payload: { [string
 			table.insert(taskState.completedIndices, i)
 		end
 
-		Remotes.DailyTask_Progress_S2C:FireClient(player, {
+		RemoteUtils.fireClient(Remotes.DailyTask_Progress_S2C, player, {
 			taskId      = task.id,
 			newProgress = task.progress,
 			completed   = task.completed,
@@ -263,7 +264,7 @@ local function grantReward(player: Player, reward: Types.TaskReward)
 	end
 	if reward.cahayaHati and reward.cahayaHati > 0 then
 		data.cahayaHati += reward.cahayaHati
-		Remotes.Cahaya_SyncState_S2C:FireClient(player, {
+		RemoteUtils.fireClient(Remotes.Cahaya_SyncState_S2C, player, {
 			cahaya     = data.cahaya,
 			cahayaHati = data.cahayaHati,
 		})
@@ -378,11 +379,11 @@ Remotes.DailyTask_ClaimMilestone.OnServerEvent:Connect(function(player: Player, 
 
 		-- Notify client if weekly milestone is now unlocked
 		if weekly.fullClearDays >= Constants.WEEKLY_MILESTONE_MIN_DAYS and not weekly.rewardClaimed then
-			Remotes.DailyTask_WeeklyResult_S2C:FireClient(player, { reward = nil })
+			RemoteUtils.fireClient(Remotes.DailyTask_WeeklyResult_S2C, player, { reward = nil })
 		end
 	end
 
-	Remotes.DailyTask_MilestoneResult_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.DailyTask_MilestoneResult_S2C, player, {
 		tier   = tier,
 		reward = finalReward,
 	})
@@ -422,10 +423,10 @@ Remotes.DailyTask_ClaimWeekly.OnServerEvent:Connect(function(player: Player)
 
 	-- Notify client if monthly milestone is now unlocked
 	if monthly.weeklyMilestonesMet >= Constants.MONTHLY_MILESTONE_MIN_WEEKS and not monthly.rewardClaimed then
-		Remotes.DailyTask_MonthlyResult_S2C:FireClient(player, { reward = nil })
+		RemoteUtils.fireClient(Remotes.DailyTask_MonthlyResult_S2C, player, { reward = nil })
 	end
 
-	Remotes.DailyTask_WeeklyResult_S2C:FireClient(player, { reward = reward })
+	RemoteUtils.fireClient(Remotes.DailyTask_WeeklyResult_S2C, player, { reward = reward })
 end)
 
 -- ─── T-063: Monthly claim remote ─────────────────────────────────────────────
@@ -451,7 +452,7 @@ Remotes.DailyTask_ClaimMonthly.OnServerEvent:Connect(function(player: Player)
 	local reward: Types.TaskReward = { fragmentItemId = "FRAGMENT_EPIK_MONTHLY" }
 	grantReward(player, reward)
 
-	Remotes.DailyTask_MonthlyResult_S2C:FireClient(player, { reward = reward })
+	RemoteUtils.fireClient(Remotes.DailyTask_MonthlyResult_S2C, player, { reward = reward })
 end)
 
 -- ─── T-061: Login streak ─────────────────────────────────────────────────────
@@ -696,7 +697,7 @@ function DailyTaskService.init(player: Player)
 	end
 
 	-- Sync current state to client
-	Remotes.DailyTask_Sync_S2C:FireClient(player, { taskState = data.taskState })
+	RemoteUtils.fireClient(Remotes.DailyTask_Sync_S2C, player, { taskState = data.taskState })
 end
 
 function DailyTaskService.cleanup(player: Player)

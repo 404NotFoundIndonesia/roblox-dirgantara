@@ -16,12 +16,13 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared      = ReplicatedStorage:WaitForChild("Shared")
 local Packages    = ReplicatedStorage:WaitForChild("Packages")
-local Constants   = require(Shared.Constants)
-local WingDefs    = require(Shared.WingDefs)
-local RealmDefs   = require(Shared.RealmDefs)
-local Remotes     = require(Shared.Remotes)
-local RateLimiter = require(Shared.RateLimiter)
-local t           = require(Packages.t)
+local Constants    = require(Shared.Constants)
+local WingDefs     = require(Shared.WingDefs)
+local RealmDefs    = require(Shared.RealmDefs)
+local Remotes      = require(Shared.Remotes)
+local RateLimiter  = require(Shared.RateLimiter)
+local t            = require(Packages.t)
+local RemoteUtils  = require(script.Parent.Parent.RemoteUtils)
 
 -- Lazy-require sibling services to avoid load-order cycles
 local _DataService:     any = nil
@@ -100,7 +101,7 @@ function WingService.awardAwanXP(player: Player, amount: number)
 	-- Fire on every XP change so the client can update its XP bar.
 	-- A rank-up is signalled by the rank field changing; the client detects it by
 	-- comparing the incoming rank to its cached value and shows the appropriate notification.
-	Remotes.AwanXP_Update_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.AwanXP_Update_S2C, player, {
 		xp   = data.awanXP,
 		rank = newRank,
 	})
@@ -117,7 +118,7 @@ Remotes.Wing_UpgradeRequest.OnServerEvent:Connect(function(player: Player)
 
 	-- Validate: not already at max
 	if currentLevel >= Constants.MAX_WING_LEVEL then
-		Remotes.Wing_UpgradeResult_S2C:FireClient(player, {
+		RemoteUtils.fireClient(Remotes.Wing_UpgradeResult_S2C, player, {
 			success       = false,
 			newLevel      = currentLevel,
 			newCahayaHati = data.cahayaHati,
@@ -131,7 +132,7 @@ Remotes.Wing_UpgradeRequest.OnServerEvent:Connect(function(player: Player)
 
 	-- Validate: enough Cahaya Hati
 	if data.cahayaHati < nextDef.cahayaHatiCost then
-		Remotes.Wing_UpgradeResult_S2C:FireClient(player, {
+		RemoteUtils.fireClient(Remotes.Wing_UpgradeResult_S2C, player, {
 			success       = false,
 			newLevel      = currentLevel,
 			newCahayaHati = data.cahayaHati,
@@ -142,7 +143,7 @@ Remotes.Wing_UpgradeRequest.OnServerEvent:Connect(function(player: Player)
 	-- Validate: no active Sky's Peak run
 	local sps = getSPS()
 	if sps.isRunActive and sps.isRunActive(player) then
-		Remotes.Wing_UpgradeResult_S2C:FireClient(player, {
+		RemoteUtils.fireClient(Remotes.Wing_UpgradeResult_S2C, player, {
 			success       = false,
 			newLevel      = currentLevel,
 			newCahayaHati = data.cahayaHati,
@@ -161,10 +162,10 @@ Remotes.Wing_UpgradeRequest.OnServerEvent:Connect(function(player: Player)
 	WingService.awardAwanXP(player, Constants.AWAN_XP_WING_PER_LEVEL * nextLevel)
 
 	-- Sync wing level to client
-	Remotes.Wing_LevelSync_S2C:FireClient(player, { level = nextLevel })
+	RemoteUtils.fireClient(Remotes.Wing_LevelSync_S2C, player, { level = nextLevel })
 
 	-- Fire upgrade result
-	Remotes.Wing_UpgradeResult_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Wing_UpgradeResult_S2C, player, {
 		success       = true,
 		newLevel      = nextLevel,
 		newCahayaHati = data.cahayaHati,
@@ -183,7 +184,7 @@ function WingService.canEnterRealm(player: Player, realmId: string): boolean
 	if not data or not realmDef then return false end
 
 	if data.wingLevel < realmDef.minWingLevel then
-		Remotes.Wing_GateDenied_S2C:FireClient(player, {
+		RemoteUtils.fireClient(Remotes.Wing_GateDenied_S2C, player, {
 			requiredLevel = realmDef.minWingLevel,
 		})
 		return false
@@ -226,8 +227,8 @@ function WingService.init(player: Player)
 	-- Send wing level + XP/rank to client
 	task.defer(function()
 		if not _players[userId] then return end
-		Remotes.Wing_LevelSync_S2C:FireClient(player, { level = data.wingLevel })
-		Remotes.AwanXP_Update_S2C:FireClient(player, {
+		RemoteUtils.fireClient(Remotes.Wing_LevelSync_S2C, player, { level = data.wingLevel })
+		RemoteUtils.fireClient(Remotes.AwanXP_Update_S2C, player, {
 			xp   = data.awanXP,
 			rank = _lastRank[userId],
 		})

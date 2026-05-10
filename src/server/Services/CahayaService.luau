@@ -23,10 +23,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared      = ReplicatedStorage:WaitForChild("Shared")
 local Packages    = ReplicatedStorage:WaitForChild("Packages")
-local Constants   = require(Shared.Constants)
-local Remotes     = require(Shared.Remotes)
-local RateLimiter = require(Shared.RateLimiter)
-local t           = require(Packages.t)
+local Constants    = require(Shared.Constants)
+local Remotes      = require(Shared.Remotes)
+local RateLimiter  = require(Shared.RateLimiter)
+local t            = require(Packages.t)
+local RemoteUtils  = require(script.Parent.Parent.RemoteUtils)
 
 -- Lazy-require sibling services to avoid load-order cycles
 local _DataService:        any = nil
@@ -169,7 +170,7 @@ Remotes.Cahaya_CollectOrb.OnServerEvent:Connect(function(player: Player, payload
 
 	-- Daily cap check
 	if data.dailyCahayaCollected >= Constants.DAILY_CAHAYA_CAP then
-		Remotes.Cahaya_CollectResult_S2C:FireClient(player, {
+		RemoteUtils.fireClient(Remotes.Cahaya_CollectResult_S2C, player, {
 			newTotal       = data.cahaya,
 			dailyCollected = data.dailyCahayaCollected,
 			capReached     = true,
@@ -215,7 +216,7 @@ Remotes.Cahaya_CollectOrb.OnServerEvent:Connect(function(player: Player, payload
 	end
 
 	local capReached = data.dailyCahayaCollected >= Constants.DAILY_CAHAYA_CAP
-	Remotes.Cahaya_CollectResult_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Cahaya_CollectResult_S2C, player, {
 		newTotal       = data.cahaya,
 		dailyCollected = data.dailyCahayaCollected,
 		capReached     = capReached,
@@ -239,12 +240,12 @@ Remotes.Cahaya_ReviveRequest.OnServerEvent:Connect(function(rescuer: Player, pay
 
 	local target = Players:GetPlayerByUserId(targetId)
 	if not target then
-		Remotes.Cahaya_ReviveResult_S2C:FireClient(rescuer, { success = false })
+		RemoteUtils.fireClient(Remotes.Cahaya_ReviveResult_S2C, rescuer, { success = false })
 		return
 	end
 
 	local ok = CahayaService.revive(rescuer, target)
-	Remotes.Cahaya_ReviveResult_S2C:FireClient(rescuer, { success = ok })
+	RemoteUtils.fireClient(Remotes.Cahaya_ReviveResult_S2C, rescuer, { success = ok })
 end)
 
 -- ─── T-030: Gift remote ───────────────────────────────────────────────────────
@@ -258,7 +259,7 @@ Remotes.Cahaya_GiftRequest.OnServerEvent:Connect(function(giver: Player, payload
 
 	local recipient = Players:GetPlayerByUserId(targetId)
 	if not recipient then
-		Remotes.Cahaya_GiftResult_S2C:FireClient(giver, { success = false, reason = "notFound" })
+		RemoteUtils.fireClient(Remotes.Cahaya_GiftResult_S2C, giver, { success = false, reason = "notFound" })
 		return
 	end
 
@@ -272,7 +273,7 @@ function CahayaService.add(player: Player, amount: number)
 	local data = getDS().get(player)
 	if not data then return end
 	data.cahaya += amount
-	Remotes.Cahaya_SyncState_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Cahaya_SyncState_S2C, player, {
 		cahaya     = data.cahaya,
 		cahayaHati = data.cahayaHati,
 	})
@@ -289,7 +290,7 @@ function CahayaService.drain(player: Player, amount: number)
 	data.cahaya = math.max(0, data.cahaya - amount)
 
 	-- Sync updated Cahaya to client HUD
-	Remotes.Cahaya_SyncState_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Cahaya_SyncState_S2C, player, {
 		cahaya     = data.cahaya,
 		cahayaHati = data.cahayaHati,
 	})
@@ -297,7 +298,7 @@ function CahayaService.drain(player: Player, amount: number)
 	if data.cahaya == 0 then
 		_isExtinguished[userId] = true
 		getFS().extinguish(player)
-		Remotes.Cahaya_Extinguished_S2C:FireClient(player, {})
+		RemoteUtils.fireClient(Remotes.Cahaya_Extinguished_S2C, player, {})
 
 		-- Teleport to last safe checkpoint (T-031)
 		local checkpoint = _safeCheckpoints[userId]
@@ -322,7 +323,7 @@ function CahayaService.extinguish(player: Player)
 	_isExtinguished[userId] = true
 
 	getFS().extinguish(player)
-	Remotes.Cahaya_Extinguished_S2C:FireClient(player, {})
+	RemoteUtils.fireClient(Remotes.Cahaya_Extinguished_S2C, player, {})
 
 	Remotes.Cahaya_SyncState_S2C:FireClient(player, {
 		cahaya     = 0,
@@ -374,16 +375,16 @@ function CahayaService.revive(rescuer: Player, target: Player): boolean
 	getFS().restore(target)
 
 	-- Notify target: restored with 10 Cahaya
-	Remotes.Cahaya_Restored_S2C:FireClient(target, { newTotal = targetData.cahaya })
+	RemoteUtils.fireClient(Remotes.Cahaya_Restored_S2C, target, { newTotal = targetData.cahaya })
 
 	-- Sync rescuer's updated Cahaya
-	Remotes.Cahaya_SyncState_S2C:FireClient(rescuer, {
+	RemoteUtils.fireClient(Remotes.Cahaya_SyncState_S2C, rescuer, {
 		cahaya     = rescuerData.cahaya,
 		cahayaHati = rescuerData.cahayaHati,
 	})
 
 	-- Also sync target's full state
-	Remotes.Cahaya_SyncState_S2C:FireClient(target, {
+	RemoteUtils.fireClient(Remotes.Cahaya_SyncState_S2C, target, {
 		cahaya     = targetData.cahaya,
 		cahayaHati = targetData.cahayaHati,
 	})
@@ -400,19 +401,19 @@ function CahayaService.gift(giver: Player, recipient: Player, amount: number)
 	local giverData     = getDS().get(giver)
 	local recipientData = getDS().get(recipient)
 	if not giverData or not recipientData then
-		Remotes.Cahaya_GiftResult_S2C:FireClient(giver, { success = false, reason = "dataError" })
+		RemoteUtils.fireClient(Remotes.Cahaya_GiftResult_S2C, giver, { success = false, reason = "dataError" })
 		return
 	end
 
 	-- Daily gift limit
 	if giverData.ikatanGiftsGivenToday >= Constants.MAX_IKATAN_GIFTS_PER_DAY then
-		Remotes.Cahaya_GiftResult_S2C:FireClient(giver, { success = false, reason = "dailyLimit" })
+		RemoteUtils.fireClient(Remotes.Cahaya_GiftResult_S2C, giver, { success = false, reason = "dailyLimit" })
 		return
 	end
 
 	-- Giver must own enough Cahaya Hati
 	if giverData.cahayaHati < amount then
-		Remotes.Cahaya_GiftResult_S2C:FireClient(giver, { success = false, reason = "insufficient" })
+		RemoteUtils.fireClient(Remotes.Cahaya_GiftResult_S2C, giver, { success = false, reason = "insufficient" })
 		return
 	end
 
@@ -422,14 +423,14 @@ function CahayaService.gift(giver: Player, recipient: Player, amount: number)
 	giverData.ikatanGiftsGivenToday += 1
 
 	-- Notify giver
-	Remotes.Cahaya_GiftResult_S2C:FireClient(giver, { success = true })
+	RemoteUtils.fireClient(Remotes.Cahaya_GiftResult_S2C, giver, { success = true })
 
 	-- Sync both parties
-	Remotes.Cahaya_SyncState_S2C:FireClient(giver, {
+	RemoteUtils.fireClient(Remotes.Cahaya_SyncState_S2C, giver, {
 		cahaya     = giverData.cahaya,
 		cahayaHati = giverData.cahayaHati,
 	})
-	Remotes.Cahaya_SyncState_S2C:FireClient(recipient, {
+	RemoteUtils.fireClient(Remotes.Cahaya_SyncState_S2C, recipient, {
 		cahaya     = recipientData.cahaya,
 		cahayaHati = recipientData.cahayaHati,
 	})
@@ -479,7 +480,7 @@ function CahayaService.init(player: Player)
 		-- Defer one frame to ensure character + UI are ready
 		task.defer(function()
 			if _players[userId] then
-				Remotes.Cahaya_SyncState_S2C:FireClient(player, {
+				RemoteUtils.fireClient(Remotes.Cahaya_SyncState_S2C, player, {
 					cahaya     = data.cahaya,
 					cahayaHati = data.cahayaHati,
 				})

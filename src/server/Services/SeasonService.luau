@@ -18,12 +18,13 @@ local Workspace         = game:GetService("Workspace")
 
 local Shared      = ReplicatedStorage:WaitForChild("Shared")
 local Packages    = ReplicatedStorage:WaitForChild("Packages")
-local Constants   = require(Shared.Constants)
-local Remotes     = require(Shared.Remotes)
-local SeasonDefs  = require(Shared.SeasonDefs)
-local Types       = require(Shared.Types)
-local RateLimiter = require(Shared.RateLimiter)
-local t           = require(Packages.t)
+local Constants    = require(Shared.Constants)
+local Remotes      = require(Shared.Remotes)
+local SeasonDefs   = require(Shared.SeasonDefs)
+local Types        = require(Shared.Types)
+local RateLimiter  = require(Shared.RateLimiter)
+local t            = require(Packages.t)
+local RemoteUtils  = require(script.Parent.Parent.RemoteUtils)
 
 -- ─── Lazy-requires ────────────────────────────────────────────────────────────
 
@@ -109,7 +110,7 @@ local function grantReward(player: Player, reward: Types.TaskReward)
 	end
 	if reward.cahayaHati and reward.cahayaHati > 0 then
 		data.cahayaHati += reward.cahayaHati
-		Remotes.Cahaya_SyncState_S2C:FireClient(player, {
+		RemoteUtils.fireClient(Remotes.Cahaya_SyncState_S2C, player, {
 			cahaya     = data.cahaya,
 			cahayaHati = data.cahayaHati,
 		})
@@ -206,14 +207,14 @@ local function handleQuestEvent(player: Player, eventName: string, amount: numbe
 	local next = math.min(prev + amount, quest.target)
 	data.seasonQuestProgress[quest.id] = next
 
-	Remotes.Season_QuestProgress_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Season_QuestProgress_S2C, player, {
 		questId  = quest.id,
 		progress = next,
 	})
 
 	if next >= quest.target then
 		grantReward(player, quest.reward)
-		Remotes.Season_StateSync_S2C:FireClient(player, {
+		RemoteUtils.fireClient(Remotes.Season_StateSync_S2C, player, {
 			seasonState = buildSeasonPayload(player),
 		})
 	end
@@ -337,7 +338,7 @@ local function broadcastSeasonState()
 		if data and _activeSeason then
 			data.activeSeasonId = _activeSeason.id
 		end
-		Remotes.Season_StateSync_S2C:FireClient(player, {
+		RemoteUtils.fireClient(Remotes.Season_StateSync_S2C, player, {
 			seasonState = buildSeasonPayload(player),
 		})
 	end
@@ -397,7 +398,7 @@ Remotes.KoinShop_BuyItem.OnServerEvent:Connect(function(player: Player, payload:
 
 	local season = _activeSeason
 	if not season then
-		Remotes.KoinShop_BuyResult_S2C:FireClient(player, { success = false, newBalance = data.koinMusim })
+		RemoteUtils.fireClient(Remotes.KoinShop_BuyResult_S2C, player, { success = false, newBalance = data.koinMusim })
 		return
 	end
 
@@ -410,18 +411,18 @@ Remotes.KoinShop_BuyItem.OnServerEvent:Connect(function(player: Player, payload:
 	end
 
 	if not shopEntry then
-		Remotes.KoinShop_BuyResult_S2C:FireClient(player, { success = false, newBalance = data.koinMusim })
+		RemoteUtils.fireClient(Remotes.KoinShop_BuyResult_S2C, player, { success = false, newBalance = data.koinMusim })
 		return
 	end
 	if data.ownedItems[itemId] or data.koinMusim < shopEntry.price then
-		Remotes.KoinShop_BuyResult_S2C:FireClient(player, { success = false, newBalance = data.koinMusim })
+		RemoteUtils.fireClient(Remotes.KoinShop_BuyResult_S2C, player, { success = false, newBalance = data.koinMusim })
 		return
 	end
 
 	data.koinMusim -= shopEntry.price
 	getCosmSvc().grantItem(player, itemId)
 
-	Remotes.KoinShop_BuyResult_S2C:FireClient(player, { success = true, newBalance = data.koinMusim })
+	RemoteUtils.fireClient(Remotes.KoinShop_BuyResult_S2C, player, { success = true, newBalance = data.koinMusim })
 end)
 
 -- ─── Service lifecycle ────────────────────────────────────────────────────────
@@ -435,7 +436,7 @@ function SeasonService.init(player: Player)
 		data.activeSeasonId = _activeSeason.id
 	end
 
-	Remotes.Season_StateSync_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Season_StateSync_S2C, player, {
 		seasonState = buildSeasonPayload(player),
 	})
 end

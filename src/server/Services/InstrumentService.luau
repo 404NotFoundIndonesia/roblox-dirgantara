@@ -19,11 +19,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared      = ReplicatedStorage:WaitForChild("Shared")
 local Packages    = ReplicatedStorage:WaitForChild("Packages")
-local Constants   = require(Shared.Constants)
-local Remotes     = require(Shared.Remotes)
-local Types       = require(Shared.Types)
-local RateLimiter = require(Shared.RateLimiter)
-local t           = require(Packages.t)
+local Constants    = require(Shared.Constants)
+local Remotes      = require(Shared.Remotes)
+local Types        = require(Shared.Types)
+local RateLimiter  = require(Shared.RateLimiter)
+local t            = require(Packages.t)
+local RemoteUtils  = require(script.Parent.Parent.RemoteUtils)
 
 -- ─── Lazy-requires ────────────────────────────────────────────────────────────
 
@@ -131,7 +132,7 @@ Remotes.Instrument_PlayNote.OnServerEvent:Connect(function(player: Player, paylo
 		noteIndex    = noteIndex,
 	}
 	for _, other in getNearbyPlayers(player, Constants.INSTRUMENT_RELAY_RANGE) do
-		Remotes.Instrument_NoteRelay_S2C:FireClient(other, relay)
+		RemoteUtils.fireClient(Remotes.Instrument_NoteRelay_S2C, other, relay)
 	end
 end)
 
@@ -148,7 +149,7 @@ Remotes.Instrument_Strum.OnServerEvent:Connect(function(player: Player, payload:
 
 	local relay = { userId = userId, instrumentId = instrumentId }
 	for _, other in getNearbyPlayers(player, Constants.INSTRUMENT_RELAY_RANGE) do
-		Remotes.Instrument_StrumRelay_S2C:FireClient(other, relay)
+		RemoteUtils.fireClient(Remotes.Instrument_StrumRelay_S2C, other, relay)
 	end
 end)
 
@@ -171,7 +172,7 @@ Remotes.Instrument_SustainStart.OnServerEvent:Connect(function(player: Player, p
 		sustain      = true,
 	}
 	for _, other in getNearbyPlayers(player, Constants.INSTRUMENT_RELAY_RANGE) do
-		Remotes.Instrument_NoteRelay_S2C:FireClient(other, relay)
+		RemoteUtils.fireClient(Remotes.Instrument_NoteRelay_S2C, other, relay)
 	end
 end)
 
@@ -191,7 +192,7 @@ Remotes.Instrument_SustainEnd.OnServerEvent:Connect(function(player: Player)
 		sustain      = false,
 	}
 	for _, other in getNearbyPlayers(player, Constants.INSTRUMENT_RELAY_RANGE) do
-		Remotes.Instrument_NoteRelay_S2C:FireClient(other, relay)
+		RemoteUtils.fireClient(Remotes.Instrument_NoteRelay_S2C, other, relay)
 	end
 end)
 
@@ -279,7 +280,7 @@ local function runHarmoniScan()
 					playerCount = #cluster,
 				})
 			end
-			Remotes.Harmoni_Start_S2C:FireClient(player, { playerIds = playerIds })
+			RemoteUtils.fireClient(Remotes.Harmoni_Start_S2C, player, { playerIds = playerIds })
 		end
 	end
 
@@ -291,7 +292,7 @@ local function runHarmoniScan()
 		local player = _players[userId]
 		if player then
 			getFlightSvc().setHarmoni(player, false)
-			Remotes.Harmoni_End_S2C:FireClient(player, {})
+			RemoteUtils.fireClient(Remotes.Harmoni_End_S2C, player, {})
 		end
 	end
 end

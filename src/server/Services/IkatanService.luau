@@ -24,6 +24,7 @@ local CosmeticDefs = require(Shared.CosmeticDefs)
 local Remotes      = require(Shared.Remotes)
 local RateLimiter  = require(Shared.RateLimiter)
 local t            = require(Packages.t)
+local RemoteUtils  = require(script.Parent.Parent.RemoteUtils)
 
 -- Lazy-require sibling services to avoid load-order cycles
 local _DataService:     any = nil
@@ -159,7 +160,7 @@ local function syncCahaya(player: Player)
 	if not data then
 		return
 	end
-	Remotes.Cahaya_SyncState_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Cahaya_SyncState_S2C, player, {
 		cahaya     = data.cahaya,
 		cahayaHati = data.cahayaHati,
 	})
@@ -234,7 +235,7 @@ Remotes.Ikatan_OfferRequest.OnServerEvent:Connect(function(sender: Player, paylo
 		expiresAt  = os.time() + Constants.IKATAN_OFFER_TTL,
 	}
 
-	Remotes.Ikatan_OfferNotify_S2C:FireClient(target, {
+	RemoteUtils.fireClient(Remotes.Ikatan_OfferNotify_S2C, target, {
 		fromUserId = senderId,
 		fromName   = sender.DisplayName,
 	})
@@ -314,11 +315,11 @@ Remotes.Ikatan_AcceptRequest.OnServerEvent:Connect(function(acceptor: Player, pa
 	getWS().awardAwanXP(initiator, Constants.AWAN_XP_IKATAN_FORM)
 
 	-- Notify both
-	Remotes.Ikatan_FormedResult_S2C:FireClient(acceptor, {
+	RemoteUtils.fireClient(Remotes.Ikatan_FormedResult_S2C, acceptor, {
 		partnerId      = fromUserId,
 		newCahayaHati  = acceptorData.cahayaHati,
 	})
-	Remotes.Ikatan_FormedResult_S2C:FireClient(initiator, {
+	RemoteUtils.fireClient(Remotes.Ikatan_FormedResult_S2C, initiator, {
 		partnerId      = acceptorId,
 		newCahayaHati  = initiatorData.cahayaHati,
 	})
@@ -451,7 +452,7 @@ Remotes.Ikatan_GiftRequest.OnServerEvent:Connect(function(sender: Player, payloa
 	-- Grant via CosmeticService (T-050 spec)
 	getCosmSvc().grantItem(recipient, itemId)
 
-	Remotes.Ikatan_GiftNotify_S2C:FireClient(recipient, {
+	RemoteUtils.fireClient(Remotes.Ikatan_GiftNotify_S2C, recipient, {
 		fromUserId = senderId,
 		itemId     = itemId,
 	})
@@ -486,7 +487,7 @@ task.spawn(function()
 				end
 
 				if _players[userId] then
-					Remotes.Ikatan_PresenceUpdate_S2C:FireClient(player, {
+					RemoteUtils.fireClient(Remotes.Ikatan_PresenceUpdate_S2C, player, {
 						allPartnerIds    = allPartnerIds,
 						onlinePartnerIds = onlinePartnerIds,
 					})

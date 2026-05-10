@@ -25,9 +25,11 @@ local Shared      = ReplicatedStorage:WaitForChild("Shared")
 local Packages    = ReplicatedStorage:WaitForChild("Packages")
 local Types       = require(Shared.Types)
 local Constants   = require(Shared.Constants)
+local Remotes     = require(Shared.Remotes)
 local RetryAsync  = require(Shared.RetryAsync)
 local RateLimiter = require(Shared.RateLimiter)
 local t           = require(Packages.t)
+local RemoteUtils = require(script.Parent.Parent.RemoteUtils)
 
 local DataService = {}
 
@@ -298,6 +300,13 @@ end
 
 function DataService.init(player: Player)
 	load(player)
+	-- T-130: notify client if data failed to load so the UI can show a toast.
+	local loaded = _cache[player.UserId]
+	if loaded and loaded.dataLoadFailed then
+		task.defer(function()
+			RemoteUtils.fireClient(Remotes.DataService_LoadError_S2C, player, {})
+		end)
+	end
 	startAutoSave(player)
 	-- T-116: apply purchases queued while the player was offline.
 	local monetSvc = require(script.Parent.MonetizationService)
@@ -375,9 +384,7 @@ end
 
 -- ─── Settings_SetUIScale handler (T-092) ─────────────────────────────────────
 
-local _Remotes = require(Shared.Remotes)
-
-_Remotes.Settings_SetUIScale.OnServerEvent:Connect(function(player: Player, payload: any)
+Remotes.Settings_SetUIScale.OnServerEvent:Connect(function(player: Player, payload: any)
 	local userId = player.UserId
 	if not _uiScaleLimiter.check(userId) then return end
 	if not _validateUIScale(payload) then return end

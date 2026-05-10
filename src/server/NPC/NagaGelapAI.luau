@@ -33,8 +33,9 @@ local Players            = game:GetService("Players")
 local RunService         = game:GetService("RunService")
 local ReplicatedStorage  = game:GetService("ReplicatedStorage")
 
-local Shared  = ReplicatedStorage:WaitForChild("Shared")
-local Remotes = require(Shared.Remotes)
+local Shared      = ReplicatedStorage:WaitForChild("Shared")
+local Remotes     = require(Shared.Remotes)
+local RemoteUtils = require(script.Parent.Parent.RemoteUtils)
 
 -- Lazy-require sibling services (avoid load-order cycles)
 local _CahayaService:    any = nil
@@ -431,7 +432,7 @@ local function despawnZone(zoneId: string)
 			local char = player.Character
 			local hrp  = char and (char:FindFirstChild("HumanoidRootPart") :: BasePart?)
 			if hrp and (hrp.Position - nagaPos).Magnitude <= RELAY_RANGE then
-				Remotes.NagaGelap_StateRelay_S2C:FireClient(player, payload)
+				RemoteUtils.fireClient(Remotes.NagaGelap_StateRelay_S2C, player, payload)
 			end
 		end
 
@@ -470,7 +471,7 @@ RunService.Heartbeat:Connect(function(dt: number)
 				local char = player.Character
 				local hrp  = char and (char:FindFirstChild("HumanoidRootPart") :: BasePart?)
 				if hrp and (hrp.Position - nagaPos).Magnitude <= RELAY_RANGE then
-					Remotes.NagaGelap_StateRelay_S2C:FireClient(player, payload)
+					RemoteUtils.fireClient(Remotes.NagaGelap_StateRelay_S2C, player, payload)
 				end
 			end
 		end

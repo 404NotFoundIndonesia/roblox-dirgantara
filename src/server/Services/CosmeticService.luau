@@ -23,6 +23,7 @@ local Types        = require(Shared.Types)
 local CosmeticDefs = require(Shared.CosmeticDefs)
 local RateLimiter  = require(Shared.RateLimiter)
 local t            = require(Packages.t)
+local RemoteUtils  = require(script.Parent.Parent.RemoteUtils)
 
 -- ─── Lazy-requires ────────────────────────────────────────────────────────────
 
@@ -97,7 +98,7 @@ function CosmeticService.grantItem(player: Player, itemId: string)
 	data.ownedItems[itemId] = true
 
 	-- Partial inventory sync to client
-	Remotes.Cosmetic_InventorySync_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Cosmetic_InventorySync_S2C, player, {
 		ownedItems = ownedItemsList(data),
 	})
 
@@ -119,7 +120,7 @@ function CosmeticService.grantFragment(player: Player, itemId: string)
 	if data.fragmentInventory[itemId] >= Constants.FRAGMENT_CRAFT_COUNT then
 		data.fragmentInventory[itemId] = 0
 		CosmeticService.grantItem(player, itemId)
-		Remotes.Cosmetic_FragmentCrafted_S2C:FireClient(player, { itemId = itemId })
+		RemoteUtils.fireClient(Remotes.Cosmetic_FragmentCrafted_S2C, player, { itemId = itemId })
 	end
 end
 
@@ -151,7 +152,7 @@ Remotes.Cosmetic_EquipRequest.OnServerEvent:Connect(function(player: Player, pay
 	if not data then return end
 
 	local function fail()
-		Remotes.Cosmetic_EquipResult_S2C:FireClient(player, {
+		RemoteUtils.fireClient(Remotes.Cosmetic_EquipResult_S2C, player, {
 			success = false,
 			loadout = data.equippedItems,
 		})
@@ -196,7 +197,7 @@ Remotes.Cosmetic_EquipRequest.OnServerEvent:Connect(function(player: Player, pay
 	end
 
 	-- Success: fire result to player
-	Remotes.Cosmetic_EquipResult_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Cosmetic_EquipResult_S2C, player, {
 		success = true,
 		loadout = data.equippedItems,
 	})
@@ -204,7 +205,7 @@ Remotes.Cosmetic_EquipRequest.OnServerEvent:Connect(function(player: Player, pay
 	-- Relay loadout to nearby players (T-081)
 	local nearby = getNearbyPlayers(player, Constants.COSMETIC_RELAY_RANGE)
 	for _, other in nearby do
-		Remotes.Cosmetic_LoadoutRelay_S2C:FireClient(other, {
+		RemoteUtils.fireClient(Remotes.Cosmetic_LoadoutRelay_S2C, other, {
 			userId  = player.UserId,
 			loadout = data.equippedItems,
 		})
@@ -217,12 +218,12 @@ function CosmeticService.init(player: Player)
 	local data = getDS().get(player) :: Types.PlayerData?
 	if not data then return end
 
-	Remotes.Cosmetic_InventorySync_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Cosmetic_InventorySync_S2C, player, {
 		ownedItems = ownedItemsList(data),
 		uiScale    = data.uiScale,
 	})
 
-	Remotes.Cosmetic_EquipResult_S2C:FireClient(player, {
+	RemoteUtils.fireClient(Remotes.Cosmetic_EquipResult_S2C, player, {
 		success = true,
 		loadout = data.equippedItems,
 	})
