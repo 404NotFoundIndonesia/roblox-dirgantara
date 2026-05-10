@@ -528,27 +528,27 @@
 
 ## Phase 18 — Localization Integration
 
-- [ ] **T-107 · Set up `LocalizationTable` in ReplicatedStorage**  
+- [x] **T-107 · Set up `LocalizationTable` in ReplicatedStorage**  
   Create `LocalizationTable` instance at `ReplicatedStorage.Localization.LocalizationTable`. Import base CSV with all string keys and English values (stubs initially). Add Indonesian (id) column with authored strings. Add Japanese, Arabic, Chinese Simplified columns (auto-translated stubs, flagged for review).  
   **Output:** `LocalizationService:GetTranslatorForPlayerAsync(player)` returns working translator. All defined keys resolve in English. Indonesian strings return correct Indonesian text.
 
-- [ ] **T-108 · Write `UIController.translate(key, params)` wrapper**  
+- [x] **T-108 · Write `UIController.translate(key, params)` wrapper**  
   Wrap `translator:FormatByKey(key, params)`. Called by all UI modules. Never set `TextLabel.Text` to raw strings anywhere else. Log a warning (not an error) if key not found.  
   **Output:** All TextLabels set via this function. Missing keys show the key ID in debug mode instead of crashing.
 
-- [ ] **T-109 · Write `shared/Format.luau` — number, date, countdown**  
+- [x] **T-109 · Write `shared/Format.luau` — number, date, countdown**  
   `Format.number(n)`: locale-appropriate thousands separator and decimal mark. `Format.countdown(seconds)`: returns `"Xj Ym"` (id), `"Xh Ym"` (en), `"X時間Y分"` (ja), etc. `Format.date(timestamp)`: locale-appropriate date string.  
   **Output:** Numbers display correctly for id (1.500), ar (١٬٥٠٠), ja (1,500). Countdown timer localizes correctly. All UI that shows numbers calls these functions.
 
-- [ ] **T-110 · Write `shared/Fonts.luau` — locale font dispatch**  
+- [x] **T-110 · Write `shared/Fonts.luau` — locale font dispatch**  
   Map locale codes to font asset IDs (CJK font ID, Arabic font ID). Default to `GothamSsm`. Expose `Fonts.get(): Font`. Called once in `UIController` init, applied to all new TextLabels.  
   **Output:** Japanese/Chinese/Korean players see CJK glyphs correctly. Arabic players see correct Arabic font. Latin players see Gotham.
 
-- [ ] **T-111 · Implement RTL layout for all panels**  
+- [x] **T-111 · Implement RTL layout for all panels**  
   Apply `UIController.applyLayout()` to every `UIListLayout` in: HUD, DailyTaskPanel, IkatanPanel, InventoryPanel, SeasonPanel, GaleriRohPanel, EmoteWheel, InstrumentUI. Flip `AnchorPoint.X` on positioned elements. Reverse directional icons.  
   **Output:** Arabic locale shows fully mirrored UI in every panel. No elements clipped or overlapping after mirror.
 
-- [ ] **T-112 · Populate expression bubble preset phrases in LocalizationTable**  
+- [x] **T-112 · Populate expression bubble preset phrases in LocalizationTable**  
   Add all 20 expression phrase keys (from GDD §16.9 table) for all Tier 1 languages (en, id, ja, ar, zh-cn). Verify with a native speaker sample for id, ar, ja before ship.  
   **Output:** Expression bubbles show correct phrase in player's language. All 20 phrases translated for 5 languages.
 
@@ -752,11 +752,11 @@
 | Phase 15 — UI Layer | T-090 → T-101 | 12 / 12 |
 | Phase 16 — Input | T-102 → T-104 | 3 / 3 |
 | Phase 17 — Audio | T-105 → T-106 | 2 / 2 |
-| Phase 18 — Localization | T-107 → T-112 | 0 / 6 |
+| Phase 18 — Localization | T-107 → T-112 | 6 / 6 |
 | Phase 19 — Monetization | T-113 → T-118 | 0 / 6 |
 | Phase 20 — Multi-Place | T-119 → T-121 | 0 / 3 |
 | Phase 21 — Security | T-122 → T-125 | 0 / 4 |
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **107 / 144** |
+| **TOTAL** | | **113 / 144** |

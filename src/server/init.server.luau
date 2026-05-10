@@ -33,10 +33,12 @@ local InstrumentService  = require(Services.InstrumentService)
 local EmoteService       = require(Services.EmoteService)
 local CosmeticService    = require(Services.CosmeticService)
 local SkysPeakService    = require(Services.SkysPeakService)
-local MonetizationService = require(Services.MonetizationService)
+local MonetizationService  = require(Services.MonetizationService)
+local LocalizationService  = require(Services.LocalizationService)
 
 -- Boot order (PRD §1.3): each service in this table receives init/cleanup calls
 local SERVICE_BOOT_ORDER = {
+	LocalizationService,   -- runs once; builds LocalizationTable before any player UI loads
 	DataService,
 	SeasonService,
 	CahayaService,

@@ -52,6 +52,9 @@ local _connections: { RBXScriptConnection }  = {}
 -- UIScale instances keyed by the ScreenGui they belong to
 local _uiScales: { [ScreenGui]: UIScale } = {}
 
+-- Translator obtained asynchronously in start(); nil until ready
+local _translator: any = nil
+
 -- ─── Fade overlay ─────────────────────────────────────────────────────────────
 
 local FADE_TIME = 0.1
@@ -145,6 +148,29 @@ function UIController.applyLayout(listLayout: UIListLayout)
 	end
 end
 
+-- ─── T-108: Localization helpers ─────────────────────────────────────────────
+
+-- Returns the translated string for `key`, or the key itself if not found.
+function UIController.translate(key: string, params: { [string]: any }?): string
+	if not _translator then
+		return key
+	end
+	local ok, result = pcall(function(): string
+		return (_translator :: any):FormatByKey(key, params)
+	end)
+	if ok then
+		return result :: string
+	end
+	warn("[UIController] Missing localization key:", key)
+	return key
+end
+
+-- Flip AnchorPoint.X for RTL mirroring (0→1, 1→0, 0.5→0.5).
+function UIController.flipAnchorX(element: GuiObject)
+	local ap = element.AnchorPoint
+	element.AnchorPoint = Vector2.new(1 - ap.X, ap.Y)
+end
+
 -- ─── T-092: UI scale ──────────────────────────────────────────────────────────
 
 function UIController.applyScale(gui: ScreenGui)
@@ -187,6 +213,16 @@ function UIController.start()
 	-- T-091: detect RTL
 	local locale     = LocalizationService.RobloxLocaleId
 	UIController.isRTL = (locale == "ar")
+
+	-- T-108: fetch translator asynchronously so UI can still open while loading
+	task.spawn(function()
+		local ok, translator = pcall(function()
+			return LocalizationService:GetTranslatorForPlayerAsync(LocalPlayer)
+		end)
+		if ok then
+			_translator = translator
+		end
+	end)
 
 	-- T-092: read uiScale from CosmeticService.init sync
 	table.insert(_connections,

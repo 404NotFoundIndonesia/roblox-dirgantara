@@ -17,11 +17,12 @@ local TweenService      = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
 
-local Shared     = ReplicatedStorage:WaitForChild("Shared")
-local Remotes    = require(Shared.Remotes)
-local Constants  = require(Shared.Constants)
-local Types      = require(Shared.Types)
-local Format     = require(Shared.Format)
+local Shared        = ReplicatedStorage:WaitForChild("Shared")
+local Remotes       = require(Shared.Remotes)
+local Constants     = require(Shared.Constants)
+local Types         = require(Shared.Types)
+local Format        = require(Shared.Format)
+local UIController  = require(script.Parent.Parent.Controllers.UIController)
 
 local DailyTaskPanel = {}
 
@@ -86,6 +87,7 @@ local function buildDailyContent(content: Frame, taskState: Types.DailyTaskState
 	layout.FillDirection   = Enum.FillDirection.Vertical
 	layout.Padding         = UDim.new(0, 6)
 	layout.Parent          = content
+	UIController.applyLayout(layout)
 
 	local padding          = Instance.new("UIPadding")
 	padding.PaddingTop     = UDim.new(0, 4)
@@ -182,6 +184,7 @@ local function buildDailyContent(content: Frame, taskState: Types.DailyTaskState
 	mlLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	mlLayout.Padding           = UDim.new(0, 6)
 	mlLayout.Parent            = milestoneRow
+	UIController.applyLayout(mlLayout)
 
 	local completedCount = #taskState.completedIndices
 
@@ -227,6 +230,7 @@ local function buildWeeklyContent(content: Frame, weekly: Types.WeeklyState)
 	layout.FillDirection   = Enum.FillDirection.Vertical
 	layout.Padding         = UDim.new(0, 8)
 	layout.Parent          = content
+	UIController.applyLayout(layout)
 
 	local padding          = Instance.new("UIPadding")
 	padding.PaddingTop     = UDim.new(0, 8)
@@ -287,6 +291,7 @@ local function buildMonthlyContent(content: Frame, monthly: Types.MonthlyState)
 	layout.FillDirection   = Enum.FillDirection.Vertical
 	layout.Padding         = UDim.new(0, 8)
 	layout.Parent          = content
+	UIController.applyLayout(layout)
 
 	local padding          = Instance.new("UIPadding")
 	padding.PaddingTop     = UDim.new(0, 8)
@@ -424,6 +429,7 @@ local function buildPanel()
 	tabLayout.FillDirection = Enum.FillDirection.Horizontal
 	tabLayout.Padding      = UDim.new(0, 4)
 	tabLayout.Parent       = tabBar
+	UIController.applyLayout(tabLayout)
 
 	-- Content scroll area
 	local scroll           = Instance.new("ScrollingFrame")

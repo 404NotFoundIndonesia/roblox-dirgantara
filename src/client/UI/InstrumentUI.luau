@@ -26,6 +26,8 @@ local UserInputService   = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
 
+local UIController = require(script.Parent.Parent.Controllers.UIController)
+
 local InstrumentUI = {}
 
 -- ─── Callbacks (set by InstrumentController) ─────────────────────────────────
@@ -46,10 +48,10 @@ local NOTE_COLORS    = {
 	Color3.fromRGB( 80, 160, 255),   -- A  (blue)
 }
 
-local NOTE_SIZE_PC     = UDim2.new(0, 72, 0, 100)
-local NOTE_SIZE_MOBILE = UDim2.new(0, 80, 0, 110)
-local STRUM_SIZE_PC    = UDim2.new(0, 180, 0, 80)
-local STRUM_SIZE_MOB   = UDim2.new(0, 200, 0, 90)
+local NOTE_SIZE_PC     = UDim2.fromOffset(72, 100)
+local NOTE_SIZE_MOBILE = UDim2.fromOffset(80, 110)
+local STRUM_SIZE_PC    = UDim2.fromOffset(180, 80)
+local STRUM_SIZE_MOB   = UDim2.fromOffset(200, 90)
 
 -- ─── State ────────────────────────────────────────────────────────────────────
 
@@ -73,7 +75,7 @@ end
 
 local function makeLabel(parent: Instance, text: string, size: number, bold: boolean): TextLabel
 	local l           = Instance.new("TextLabel")
-	l.Size            = UDim2.new(1, 0, 1, 0)
+	l.Size            = UDim2.fromScale(1, 1)
 	l.BackgroundTransparency = 1
 	l.Text            = text
 	l.TextScaled      = false
@@ -108,7 +110,7 @@ local function buildStrumMode(container: Frame)
 	makeLabel(btn, "STRUM", 22, true)
 
 	local uiBtn      = Instance.new("TextButton")
-	uiBtn.Size       = UDim2.new(1, 0, 1, 0)
+	uiBtn.Size       = UDim2.fromScale(1, 1)
 	uiBtn.BackgroundTransparency = 1
 	uiBtn.Text       = ""
 	uiBtn.Parent     = btn
@@ -127,7 +129,7 @@ local function buildNoteMode(container: Frame, canSustain: boolean)
 
 	-- We layout inside a UIListLayout instead of computing absolute positions.
 	local listFrame  = Instance.new("Frame")
-	listFrame.Size   = UDim2.new(1, 0, 1, 0)
+	listFrame.Size   = UDim2.fromScale(1, 1)
 	listFrame.BackgroundTransparency = 1
 	listFrame.Parent = container
 
@@ -137,6 +139,7 @@ local function buildNoteMode(container: Frame, canSustain: boolean)
 	layout.VerticalAlignment   = Enum.VerticalAlignment.Center
 	layout.Padding             = UDim.new(0, 8)
 	layout.Parent              = listFrame
+	UIController.applyLayout(layout)
 
 	-- Suppress unused-variable warning: startX computed but layout centres automatically
 	local _ = startX
@@ -149,7 +152,7 @@ local function buildNoteMode(container: Frame, canSustain: boolean)
 
 		-- Note letter label (top half)
 		local noteLabel      = Instance.new("TextLabel")
-		noteLabel.Size       = UDim2.new(1, 0, 0.5, 0)
+		noteLabel.Size       = UDim2.fromScale(1, 0.5)
 		noteLabel.Position   = UDim2.new(0, 0, 0, 0)
 		noteLabel.BackgroundTransparency = 1
 		noteLabel.Text       = NOTE_LABELS[i]
@@ -161,8 +164,8 @@ local function buildNoteMode(container: Frame, canSustain: boolean)
 		-- Keyboard hint label (bottom half, PC only)
 		if not _isMobile then
 			local hintLabel      = Instance.new("TextLabel")
-			hintLabel.Size       = UDim2.new(1, 0, 0.4, 0)
-			hintLabel.Position   = UDim2.new(0, 0, 0.6, 0)
+			hintLabel.Size       = UDim2.fromScale(1, 0.4)
+			hintLabel.Position   = UDim2.fromScale(0, 0.6)
 			hintLabel.BackgroundTransparency = 1
 			hintLabel.Text       = "[" .. NOTE_KEYS[i] .. "]"
 			hintLabel.TextSize   = 14
@@ -173,7 +176,7 @@ local function buildNoteMode(container: Frame, canSustain: boolean)
 
 		-- Invisible button overlay for click/touch
 		local uiBtn      = Instance.new("TextButton")
-		uiBtn.Size       = UDim2.new(1, 0, 1, 0)
+		uiBtn.Size       = UDim2.fromScale(1, 1)
 		uiBtn.BackgroundTransparency = 1
 		uiBtn.Text       = ""
 		uiBtn.Parent     = btn
@@ -202,7 +205,7 @@ end
 
 local function buildShakeIndicator(parent: Frame): TextLabel
 	local lbl             = Instance.new("TextLabel")
-	lbl.Size              = UDim2.new(0, 120, 0, 40)
+	lbl.Size              = UDim2.fromOffset(120, 40)
 	lbl.AnchorPoint       = Vector2.new(0.5, 0)
 	lbl.Position          = UDim2.new(0.5, 0, 0, 8)
 	lbl.BackgroundColor3  = Color3.fromRGB(220, 180, 80)
@@ -249,7 +252,7 @@ local function buildGui(instrumentId: string)
 	-- Panel anchored to bottom-centre
 	local panel           = makeFrame(
 		gui,
-		UDim2.new(0, 440, 0, 160),
+		UDim2.fromOffset(440, 160),
 		UDim2.new(0.5, -220, 1, -180),
 		Color3.fromRGB(30, 30, 40)
 	)
@@ -258,7 +261,7 @@ local function buildGui(instrumentId: string)
 
 	-- Close button (top-right corner)
 	local closeBtn             = Instance.new("TextButton")
-	closeBtn.Size              = UDim2.new(0, 36, 0, 36)
+	closeBtn.Size              = UDim2.fromOffset(36, 36)
 	closeBtn.Position          = UDim2.new(1, -44, 0, 4)
 	closeBtn.BackgroundColor3  = Color3.fromRGB(200, 80, 80)
 	closeBtn.Text              = "✕"

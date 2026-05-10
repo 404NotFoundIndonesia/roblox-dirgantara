@@ -221,6 +221,10 @@ Constants.TOAST_DURATION    = 4        -- seconds
 Constants.TOAST_MAX_VISIBLE = 3
 Constants.FAB_MIN_SIZE      = 48       -- logical pixels (mobile tap target)
 
+-- ─── Localization ────────────────────────────────────────────────────────────
+local LocalizationData = require(script.Parent.LocalizationData)
+Constants.EXPRESSION_PHRASE_KEYS = LocalizationData.getExpressionKeys()
+
 -- ─── Monetization Product IDs (replace 0 with real IDs before shipping) ───────
 Constants.PRODUCTS = {
 	MUSIM_PASS         = 0,
@@ -230,7 +234,7 @@ Constants.PRODUCTS = {
 }
 
 -- Whitelist for Monetization_PurchasePrompt validation
-Constants.ALLOWED_PRODUCT_IDS: { [number]: boolean } = {
+Constants.ALLOWED_PRODUCT_IDS = {
 	[0] = false,   -- placeholder: populate after real IDs set
 }
 

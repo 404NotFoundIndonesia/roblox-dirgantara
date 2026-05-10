@@ -21,11 +21,12 @@ local UserInputService  = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
 
-local Shared       = ReplicatedStorage:WaitForChild("Shared")
-local Remotes      = require(Shared.Remotes)
-local CosmeticDefs = require(Shared.CosmeticDefs)
-local Constants    = require(Shared.Constants)
-local Types        = require(Shared.Types)
+local Shared        = ReplicatedStorage:WaitForChild("Shared")
+local Remotes       = require(Shared.Remotes)
+local CosmeticDefs  = require(Shared.CosmeticDefs)
+local Constants     = require(Shared.Constants)
+local Types         = require(Shared.Types)
+local UIController  = require(script.Parent.Parent.Controllers.UIController)
 
 local InventoryPanel = {}
 
@@ -237,6 +238,7 @@ local function buildEmoteTab(contentFrame: Frame)
 	slotLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 	slotLayout.Padding           = UDim.new(0, 4)
 	slotLayout.Parent            = slotRow
+	UIController.applyLayout(slotLayout)
 
 	for i = 1, Constants.EMOTE_SLOT_COUNT do
 		local emoteId = _emoteSlots[i] or ""
@@ -565,6 +567,7 @@ local function buildPanel(openCategory: string)
 	tabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 	tabLayout.Padding      = UDim.new(0, 4)
 	tabLayout.Parent       = tabBar
+	UIController.applyLayout(tabLayout)
 
 	-- Content area beneath tabs
 	local contentArea      = Instance.new("Frame")
@@ -577,6 +580,7 @@ local function buildPanel(openCategory: string)
 	contentLayout.FillDirection = Enum.FillDirection.Vertical
 	contentLayout.Padding  = UDim.new(0, 6)
 	contentLayout.Parent   = contentArea
+	UIController.applyLayout(contentLayout)
 
 	local function switchTab(category: string)
 		-- Clear content
