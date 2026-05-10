@@ -295,11 +295,11 @@ Arabic (`ar`) requires full RTL layout. `UIController.applyLayout(layout)` flips
 
 | Phase | Tasks | Done |
 |---|---|---|
-| Phase 0 — Foundation | T-001 → T-013 | 0 / 15 |
-| Phase 1 — Data Layer | T-014 → T-018 | 0 / 5 |
-| Phase 2 — Flight | T-019 → T-025 | 0 / 7 |
-| Phase 3 — Cahaya | T-026 → T-031 | 0 / 6 |
-| Phase 4 — Wings | T-032 → T-035 | 0 / 4 |
+| Phase 0 — Foundation | T-001 → T-013 | 14 / 15 |
+| Phase 1 — Data Layer | T-014 → T-018 | 5 / 5 |
+| Phase 2 — Flight | T-019 → T-025 | 7 / 7 |
+| Phase 3 — Cahaya | T-026 → T-031 | 6 / 6 |
+| Phase 4 — Wings | T-032 → T-035 | 4 / 4 |
 | Phase 5 — Kegelapan | T-036 → T-040 | 5 / 5 |
 | Phase 6 — Naga Gelap AI | T-041 → T-045 | 5 / 5 |
 | Phase 7 — Ikatan | T-046 → T-050 | 5 / 5 |
@@ -316,11 +316,11 @@ Arabic (`ar`) requires full RTL layout. `UIController.applyLayout(layout)` flips
 | Phase 18 — Localization | T-107 → T-112 | 6 / 6 |
 | Phase 19 — Monetization | T-113 → T-118 | 6 / 6 |
 | Phase 20 — Multi-Place | T-119 → T-121 | 3 / 3 |
-| Phase 21 — Security | T-122 → T-125 | 0 / 4 |
-| Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
-| Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
-| Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **122 / 144** |
+| Phase 21 — Security | T-122 → T-125 | 4 / 4 |
+| Phase 22 — Performance | T-126 → T-128 | 3 / 3 |
+| Phase 23 — Error Handling | T-129 → T-132 | 4 / 4 |
+| Phase 24 — Testing | T-133 → T-142 | 10 / 10 |
+| **TOTAL** | | **143 / 144** |
 
 See [TASKS.md](TASKS.md) for full task specifications.
 
