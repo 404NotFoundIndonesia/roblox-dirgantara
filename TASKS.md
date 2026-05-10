@@ -656,11 +656,11 @@
 
 ## Phase 24 — Testing
 
-- [ ] **T-133 · Set up TestEZ runner**  
+- [x] **T-133 · Set up TestEZ runner**  
   Configure `testez.toml` to find all `*.spec.luau` files under `src/`. Add a test bootstrap script in `ServerScriptService` that runs tests in Studio only (`RunService:IsStudio()`). Print results to output.  
   **Output:** Running the game in Studio auto-executes all spec files. Pass/fail count reported in output.
 
-- [ ] **T-134 · Write `CahayaService` unit tests**  
+- [x] **T-134 · Write `CahayaService` unit tests**  
   `src/server/Services/__tests__/CahayaService.spec.luau`. Test cases:
   - Daily cap: 150 orbs accepted, 151st rejected
   - Extinguish trigger at Cahaya = 0
@@ -669,7 +669,7 @@
   - Gift: giver gets +0.5 Cahaya Hati  
   **Output:** All 5 test cases pass. Edge cases (exact cap, exact 0) covered.
 
-- [ ] **T-135 · Write `WingService` unit tests**  
+- [x] **T-135 · Write `WingService` unit tests**  
   Test cases:
   - Upgrade succeeds with exact Cahaya Hati cost
   - Upgrade fails if Cahaya Hati below cost
@@ -679,7 +679,7 @@
   - Awan XP awarded correctly per level  
   **Output:** All 6 test cases pass.
 
-- [ ] **T-136 · Write `DailyTaskService` unit tests**  
+- [x] **T-136 · Write `DailyTaskService` unit tests**  
   Test cases:
   - Seeded generation: same userId + date = same task set on multiple calls
   - Different userIds produce different task sets
@@ -691,7 +691,7 @@
   - Grace day consumed for 2-day gap when available  
   **Output:** All 8 test cases pass.
 
-- [ ] **T-137 · Write `IkatanService` unit tests**  
+- [x] **T-137 · Write `IkatanService` unit tests**  
   Test cases:
   - Offer expires after 30 seconds (mock `os.time`)
   - Accept rejected for expired offer
@@ -700,7 +700,7 @@
   - Duplicate bond: re-offering already bonded player rejected  
   **Output:** All 5 test cases pass.
 
-- [ ] **T-138 · Write `MonetizationService` unit tests**  
+- [x] **T-138 · Write `MonetizationService` unit tests**  
   Test cases:
   - Idempotent receipt: second call with same `purchaseId` returns `Granted` without re-granting
   - Starter pack: second claim blocked by `starterPackClaimed` flag
@@ -708,7 +708,7 @@
   - Pending grant applied on next login  
   **Output:** All 4 test cases pass.
 
-- [ ] **T-139 · Write `Format.luau` unit tests**  
+- [x] **T-139 · Write `Format.luau` unit tests**  
   Test cases:
   - `Format.number(1500)` → `"1,500"` for en, `"1.500"` for id, `"١٬٥٠٠"` for ar
   - `Format.countdown(5400)` → `"1h 30m"` for en, `"1j 30m"` for id
@@ -716,15 +716,15 @@
   - `Format.date(timestamp)` returns non-empty string for all 5 locales  
   **Output:** All locale-specific format cases pass.
 
-- [ ] **T-140 · Write integration test: Daily Task full cycle**  
+- [x] **T-140 · Write integration test: Daily Task full cycle**  
   Simulate: player joins → tasks generated → progress events fire → all 5 tasks complete → claim all 5 milestone tiers → verify DataStore state: `completedIndices.length == 5`, `milestoneRewardsClaimed.length == 5`, `cahayaHati` increased, Daily Chest granted.  
   **Output:** Full integration test passes in Studio.
 
-- [ ] **T-141 · Write integration test: Ikatan cross-server teleport**  
+- [x] **T-141 · Write integration test: Ikatan cross-server teleport**  
   Simulate two mock players, form Ikatan, Player A requests teleport to Player B. Verify: cooldown set, `TeleportService:TeleportToPlaceInstance` called with correct place and server, wing-level gate checked.  
   **Output:** Teleport fires with correct arguments. Gate blocks under-leveled player.
 
-- [ ] **T-142 · Write integration test: Sky's Peak cycle**  
+- [x] **T-142 · Write integration test: Sky's Peak cycle**  
   Simulate: player enters Puncak Langit → ascends → summit trigger → sacrifice confirm → verify: `cahaya == 0`, `skysPeakCycles += 1`, `cahayaHati += 3`, wing badge cosmetic granted, teleport back fires.  
   **Output:** All post-cycle state correct after full run.
 
@@ -734,11 +734,11 @@
 
 | Phase | Tasks | Done |
 |---|---|---|
-| Phase 0 — Foundation | T-001 → T-013, T-004b, T-004c | 0 / 15 |
-| Phase 1 — Data Layer | T-014 → T-018 | 0 / 5 |
-| Phase 2 — Flight | T-019 → T-025 | 0 / 7 |
-| Phase 3 — Cahaya | T-026 → T-031 | 0 / 6 |
-| Phase 4 — Wings | T-032 → T-035 | 0 / 4 |
+| Phase 0 — Foundation | T-001 → T-013, T-004b, T-004c | 14 / 15 |
+| Phase 1 — Data Layer | T-014 → T-018 | 5 / 5 |
+| Phase 2 — Flight | T-019 → T-025 | 7 / 7 |
+| Phase 3 — Cahaya | T-026 → T-031 | 6 / 6 |
+| Phase 4 — Wings | T-032 → T-035 | 4 / 4 |
 | Phase 5 — Kegelapan | T-036 → T-040 | 5 / 5 |
 | Phase 6 — Naga Gelap AI | T-041 → T-045 | 5 / 5 |
 | Phase 7 — Ikatan | T-046 → T-050 | 5 / 5 |
@@ -758,5 +758,5 @@
 | Phase 21 — Security | T-122 → T-125 | 4 / 4 |
 | Phase 22 — Performance | T-126 → T-128 | 3 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 4 / 4 |
-| Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **133 / 144** |
+| Phase 24 — Testing | T-133 → T-142 | 10 / 10 |
+| **TOTAL** | | **143 / 144** |
