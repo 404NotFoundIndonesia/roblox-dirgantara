@@ -48,6 +48,16 @@ end
 
 local WingService = {}
 
+-- ─── T-120: Current realm (derived from game.PlaceId at startup) ──────────────
+
+local _currentRealmId = "ISLE_DAWN"
+for realmId, def in RealmDefs do
+	if type(def) == "table" and (def :: any).placeId == game.PlaceId then
+		_currentRealmId = realmId
+		break
+	end
+end
+
 -- ─── Per-player state ─────────────────────────────────────────────────────────
 
 local _players:  { [number]: Player } = {}
@@ -172,7 +182,7 @@ function WingService.canEnterRealm(player: Player, realmId: string): boolean
 	return true
 end
 
--- ─── T-034: Join sync ────────────────────────────────────────────────────────
+-- ─── T-034 + T-120: Join sync + realm arrival gate ──────────────────────────
 
 function WingService.init(player: Player)
 	local userId = player.UserId
@@ -180,6 +190,22 @@ function WingService.init(player: Player)
 
 	local data = getDS().get(player)
 	if not data then return end
+
+	-- T-120: realm entry gate — bounce under-leveled players back to Hub.
+	local realmDef = (RealmDefs :: any)[_currentRealmId]
+	if realmDef and type(realmDef) == "table" then
+		if data.wingLevel < realmDef.minWingLevel then
+			Remotes.Wing_GateDenied_S2C:FireClient(player, {
+				requiredLevel = realmDef.minWingLevel,
+			})
+			local hubPlaceId = (RealmDefs :: any)["ISLE_DAWN"].placeId :: number
+			getDS().safeTeleport(player, hubPlaceId)
+			_players[userId] = nil
+			return
+		end
+		-- Successful entry: persist the realm so Sky's Peak can return here.
+		data.lastRealmId = _currentRealmId
+	end
 
 	-- Initialise rank cache before first sync
 	_lastRank[userId] = computeRank(data.awanXP)

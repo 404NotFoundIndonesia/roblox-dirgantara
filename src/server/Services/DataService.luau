@@ -19,6 +19,7 @@
 
 local DataStoreService  = game:GetService("DataStoreService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TeleportService   = game:GetService("TeleportService")
 
 local Shared     = ReplicatedStorage:WaitForChild("Shared")
 local Types      = require(Shared.Types)
@@ -78,6 +79,7 @@ local function makeDefaultData(): Types.PlayerData
 		wingLevel      = 1,
 		awanXP         = 0,
 		skysPeakCycles = 0,
+		lastRealmId    = "ISLE_DAWN",
 
 		dailyCahayaCollected  = 0,
 		dailyResetTimestamp   = 0,   -- 0 forces a daily reset on first login
@@ -213,6 +215,46 @@ function DataService.save(player: Player)
 
 	if not ok then
 		warn("[DataService] Save failed for", player.Name)
+	end
+end
+
+-- ─── T-119: Safe teleport ────────────────────────────────────────────────────
+
+local SAVE_TELEPORT_TIMEOUT = 3   -- seconds to wait for save before teleporting anyway
+
+-- Save the player's data, wait up to SAVE_TELEPORT_TIMEOUT seconds for completion,
+-- then call TeleportService:TeleportAsync regardless of save outcome.
+function DataService.safeTeleport(player: Player, placeId: number, options: TeleportOptions?)
+	local saveDone   = false
+	local saveFailed = false
+
+	local saveThread = task.spawn(function()
+		local ok = pcall(DataService.save, player)
+		saveFailed = not ok
+		saveDone   = true
+	end)
+
+	-- Poll until the save task completes or the timeout expires.
+	local elapsed = 0
+	local POLL    = 0.05
+	while not saveDone and elapsed < SAVE_TELEPORT_TIMEOUT do
+		task.wait(POLL)
+		elapsed += POLL
+	end
+
+	if not saveDone then
+		task.cancel(saveThread)
+		warn("[DataService] safeTeleport: save timed out for", player.Name, "— teleporting anyway")
+	elseif saveFailed then
+		warn("[DataService] safeTeleport: save failed for", player.Name, "— teleporting anyway")
+	end
+
+	-- Always teleport — never block the player due to a save error.
+	local teleportOk, teleportErr = pcall(function()
+		TeleportService:TeleportAsync(placeId, { player }, options)
+	end)
+	if not teleportOk then
+		warn("[DataService] safeTeleport: TeleportAsync failed:", tostring(teleportErr))
 	end
 end
 

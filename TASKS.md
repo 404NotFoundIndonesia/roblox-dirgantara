@@ -584,15 +584,15 @@
 
 ## Phase 20 — Multi-Place Architecture
 
-- [ ] **T-119 · Write TeleportService wrapper in `DataService`**  
+- [x] **T-119 · Write TeleportService wrapper in `DataService`**  
   `DataService.safeTeleport(player, placeId, options)`: call `DataService.save(player)` first, await save confirmation (or timeout 3s), then call `TeleportService:TeleportAsync`. If save fails: warn and teleport anyway (do not block player).  
   **Output:** Player data saved before teleport. No data loss from realm transitions.
 
-- [ ] **T-120 · Write realm arrival handling**  
+- [x] **T-120 · Write realm arrival handling**  
   In `WingService.init(player)`: after data load, check `RealmDefs[currentRealmId].minWingLevel`. If `wingLevel < min`: fire `Wing_GateDenied_S2C`, teleport player back to Hub (`RealmDefs["ISLE_DAWN"].placeId`). Update `PlayerData.lastRealmId` on successful entry.  
   **Output:** Under-leveled players bounced to Hub on arrival. Last realm ID persists for Sky's Peak return.
 
-- [ ] **T-121 · Write cross-server Ikatan presence (MemoryStore)**  
+- [x] **T-121 · Write cross-server Ikatan presence (MemoryStore)**  
   (Covered in T-049.) Verify TTL refresh loop works. Test: Player A joins, B joins different server, A sees B online. B leaves, A sees B offline within ~60s.  
   **Output:** Online presence accurate cross-server within one TTL window.
 
@@ -754,9 +754,9 @@
 | Phase 17 — Audio | T-105 → T-106 | 2 / 2 |
 | Phase 18 — Localization | T-107 → T-112 | 6 / 6 |
 | Phase 19 — Monetization | T-113 → T-118 | 6 / 6 |
-| Phase 20 — Multi-Place | T-119 → T-121 | 0 / 3 |
+| Phase 20 — Multi-Place | T-119 → T-121 | 3 / 3 |
 | Phase 21 — Security | T-122 → T-125 | 0 / 4 |
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **119 / 144** |
+| **TOTAL** | | **122 / 144** |

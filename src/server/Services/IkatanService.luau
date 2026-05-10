@@ -445,6 +445,45 @@ Remotes.Ikatan_GiftRequest.OnServerEvent:Connect(function(sender: Player, payloa
 	})
 end)
 
+-- ─── T-121: Server-wide presence re-broadcast loop ───────────────────────────
+
+-- Re-query every connected player's partner list each TTL window.
+-- This guarantees clients on this server see a partner go offline within
+-- one TTL window (~60s) even when the departure happens on a different server.
+task.spawn(function()
+	while true do
+		task.wait(Constants.IKATAN_PRESENCE_TTL)
+		for userId, player in _players do
+			task.spawn(function()
+				local data = getDS().get(player)
+				if not data or not _players[userId] then
+					return
+				end
+
+				local allPartnerIds:    { number } = {}
+				local onlinePartnerIds: { number } = {}
+				for _, partnerIdStr in data.ikatanList do
+					local partnerId = tonumber(partnerIdStr)
+					if partnerId then
+						table.insert(allPartnerIds, partnerId)
+						local presence = getPresence(partnerId)
+						if presence then
+							table.insert(onlinePartnerIds, partnerId)
+						end
+					end
+				end
+
+				if _players[userId] then
+					Remotes.Ikatan_PresenceUpdate_S2C:FireClient(player, {
+						allPartnerIds    = allPartnerIds,
+						onlinePartnerIds = onlinePartnerIds,
+					})
+				end
+			end)
+		end
+	end
+end)
+
 -- ─── T-049: Lifecycle ─────────────────────────────────────────────────────────
 
 function IkatanService.init(player: Player)

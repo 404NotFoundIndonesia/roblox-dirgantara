@@ -176,6 +176,7 @@ export type PlayerData = {
 	wingLevel: number,
 	awanXP: number,
 	skysPeakCycles: number,
+	lastRealmId: string,   -- most recent realm successfully entered; used by Sky's Peak return
 
 	-- Daily
 	dailyCahayaCollected: number,
