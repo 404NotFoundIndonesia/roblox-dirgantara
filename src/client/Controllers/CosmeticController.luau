@@ -32,6 +32,9 @@ local CosmeticController = {}
 
 local _connections: { RBXScriptConnection } = {}
 
+-- T-127: true when SavedQualityLevel is 1–3 (explicitly low); Automatic (0) excluded.
+local _lowQuality = false
+
 -- Per-character slot → currently applied model (keyed by character instance)
 local _appliedModels: { [Model]: { [string]: Model } } = {}
 
@@ -164,6 +167,15 @@ local function applyModel(char: Model, slotKey: string, itemId: string)
 	end
 
 	getSlotMap(char)[slotKey] = clone
+
+	-- T-127: disable non-essential particles (aura/trail) on low-quality settings.
+	if _lowQuality and (slotKey == "aura" or slotKey == "trail") then
+		for _, desc in clone:GetDescendants() do
+			if desc:IsA("ParticleEmitter") then
+				(desc :: ParticleEmitter).Enabled = false
+			end
+		end
+	end
 end
 
 -- Apply a full EquippedLoadout to a character.
@@ -204,6 +216,10 @@ end
 -- ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 function CosmeticController.start()
+	-- T-127: read quality level once; Automatic (0) is not treated as low quality.
+	local qualityValue = UserSettings().GameSettings.SavedQualityLevel.Value
+	_lowQuality = qualityValue > 0 and qualityValue <= 3
+
 	table.insert(_connections,
 		Remotes.Cosmetic_EquipResult_S2C.OnClientEvent:Connect(onEquipResult))
 	table.insert(_connections,

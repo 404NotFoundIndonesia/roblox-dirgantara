@@ -256,6 +256,10 @@ local Remotes = {
 	Settings_SetUIScale        = makeEvent("Settings_SetUIScale"),
 	-- Payload: {}
 	DataService_LoadError_S2C  = makeEvent("DataService_LoadError_S2C"),
+
+	-- ── Performance ──────────────────────────────────────────────────────────
+	-- Payload: {} — mobile client fires once on join; server lowers StreamingMinRadius
+	Performance_MobileHint     = makeEvent("Performance_MobileHint"),
 }
 
 return Remotes

@@ -27,6 +27,7 @@
     Optional: a Sound named "GrowlSound" anywhere in the model.
 ]]
 
+local CollectionService  = game:GetService("CollectionService")
 local PathfindingService = game:GetService("PathfindingService")
 local Players            = game:GetService("Players")
 local RunService         = game:GetService("RunService")
@@ -380,6 +381,7 @@ local function spawnNagas(zoneId: string, zone: ZoneInfo)
 		local spawnPoint = randomPatrolPoint(zoneCFrame, halfSize)
 		model:PivotTo(CFrame.new(spawnPoint))
 		model.Parent = workspace
+		CollectionService:AddTag(model, "NagaGelap")
 
 		local nagaId = zoneId .. "_" .. i
 

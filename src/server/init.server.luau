@@ -17,6 +17,10 @@ local ServerPackages = script.Parent:FindFirstChild("ServerPackages")
 local Shared  = ReplicatedStorage:WaitForChild("Shared")
 local _Remotes = require(Shared.Remotes)   -- side-effect: creates Remotes folder
 
+-- ─── T-126: Streaming + LOD configuration ─────────────────────────────────────
+local StreamingConfig = require(script.StreamingConfig)
+StreamingConfig.configure()
+
 -- ─── Services ─────────────────────────────────────────────────────────────────
 local Services = script.Services
 
@@ -54,6 +58,12 @@ local SERVICE_BOOT_ORDER = {
 	SkysPeakService,
 	MonetizationService,
 }
+
+-- ─── T-128: RunService policy (server) ───────────────────────────────────────
+-- ALL RunService connections on the server must use Heartbeat.
+-- RenderStepped does not fire on the server and must never be used here.
+-- Audit (verified): KegelapanService.Heartbeat, SkysPeakService.Heartbeat,
+-- FlightService.Heartbeat, NagaGelapAI.Heartbeat — all gameplay, no CFrame writes.
 
 -- ─── Player lifecycle ─────────────────────────────────────────────────────────
 

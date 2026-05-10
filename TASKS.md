@@ -620,15 +620,15 @@
 
 ## Phase 22 — Performance
 
-- [ ] **T-126 · Configure `StreamingEnabled` + LOD**  
+- [x] **T-126 · Configure `StreamingEnabled` + LOD**  
   In `Workspace`: set `StreamingEnabled = true`. Set `ModelStreamingMode = Atomic` for spirit models and NPC models. Set `StreamingMinRadius` to 256 (PC), detect platform and set 192 for mobile via server `PlaceInfo` or client hint remote. Set `StreamingPauseMode = ClientPhysicsPause`.  
   **Output:** Distant content streams in/out. Spirit models load atomically (no partial spirit visible). Mobile loads smaller radius.
 
-- [ ] **T-127 · Write particle quality scaling**  
+- [x] **T-127 · Write particle quality scaling**  
   In `CosmeticController` on init: read `UserSettings().GameSettings.SavedQualityLevel`. If ≤3: set `Enabled = false` on non-essential `ParticleEmitter` instances (auras, trails) after character spawns. Leave Cahaya orb sparkle and wing-boost particles enabled.  
   **Output:** Low-end mobile: no aura/trail particles. Gameplay-relevant particles (orbs, boost) always visible.
 
-- [ ] **T-128 · Enforce Heartbeat vs RenderStepped separation**  
+- [x] **T-128 · Enforce Heartbeat vs RenderStepped separation**  
   Audit all `RunService` connections: gameplay logic (Kegelapan drain check, Harmoni scan, charge refill) must use `Heartbeat`. Visual/cosmetic updates (companion bobbing, camera, Naga interpolation) must use `RenderStepped`. No gameplay reads in `RenderStepped`, no render writes in `Heartbeat`.  
   **Output:** Code review passes: no gameplay logic in `RenderStepped`. No `Heartbeat` doing CFrame writes.
 
@@ -756,7 +756,7 @@
 | Phase 19 — Monetization | T-113 → T-118 | 6 / 6 |
 | Phase 20 — Multi-Place | T-119 → T-121 | 3 / 3 |
 | Phase 21 — Security | T-122 → T-125 | 4 / 4 |
-| Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
+| Phase 22 — Performance | T-126 → T-128 | 3 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **126 / 144** |
+| **TOTAL** | | **129 / 144** |
