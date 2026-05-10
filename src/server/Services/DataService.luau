@@ -140,12 +140,18 @@ local function getUTC7MidnightTimestamp(): number
 	return localMidnight - Constants.DAILY_RESET_UTC_OFFSET
 end
 
+local PREMIUM_DAILY_CAHAYA_BONUS = 10
+
 local function applyDailyReset(data: Types.PlayerData, player: Player)
 	data.dailyCahayaCollected   = 0
 	data.ikatanGiftsGivenToday  = 0
 	data.dailyChestBonusUsedToday = false
 	data.dailySpiritsTouched    = {}
 	data.dailyResetTimestamp    = getUTC7MidnightTimestamp()
+	-- T-117: Roblox Premium members receive a bonus Cahaya on each daily reset.
+	if player.MembershipType == Enum.MembershipType.Premium then
+		data.cahaya += PREMIUM_DAILY_CAHAYA_BONUS
+	end
 	_dailyResetEvent:Fire(player)
 end
 
@@ -243,6 +249,9 @@ end
 function DataService.init(player: Player)
 	load(player)
 	startAutoSave(player)
+	-- T-116: apply purchases queued while the player was offline.
+	local monetSvc = require(script.Parent.MonetizationService)
+	;(monetSvc :: any).applyPendingGrants(player)
 	_playerLoadedEvent:Fire(player)
 end
 

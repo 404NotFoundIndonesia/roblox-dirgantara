@@ -556,27 +556,27 @@
 
 ## Phase 19 — Monetization
 
-- [ ] **T-113 · Write `server/Services/MonetizationService.luau` — ProcessReceipt**  
+- [x] **T-113 · Write `server/Services/MonetizationService.luau` — ProcessReceipt**  
   Implement `MarketplaceService.ProcessReceipt` callback. Load player data (or queue if offline). Check `PurchaseHistory_v1[receiptInfo.PurchaseId]` — if exists, return `PurchaseGranted`. Match `productId` to grant handler. Write `purchaseId` to `PurchaseHistory`. Return `PurchaseGranted`. Any error inside `pcall` returns `NotProcessedYet`.  
   **Output:** Receipt idempotent — re-delivered receipts do not double-grant. All errors recoverable by Roblox retry.
 
-- [ ] **T-114 · Write `MonetizationService` — Season Pass grant handlers**  
+- [x] **T-114 · Write `MonetizationService` — Season Pass grant handlers**  
   Handler for `MUSIM_PASS`: set `seasonPassOwned = true`, grant seasonal cosmetic set, fire `Monetization_PassSync_S2C`. Handler for `MUSIM_PASS_PLUS`: same + set `seasonPassPlusOwned = true`, mark first 3 season spirits freed in `freedSeasonSpiritIds` + grant their cosmetic rewards via `CosmeticService`.  
   **Output:** Pass purchase immediately unlocks all season content for that player. Plus tier auto-frees first 3 spirits.
 
-- [ ] **T-115 · Write `MonetizationService` — Starter Pack handler**  
+- [x] **T-115 · Write `MonetizationService` — Starter Pack handler**  
   On `STARTER_PACK` receipt: check `starterPackClaimed`. If true: return `PurchaseGranted` (no re-grant). Else: grant 50 Cahaya, 5 Cahaya Hati, 1 starter cosmetic bundle; set `starterPackClaimed = true`.  
   **Output:** Starter pack claimable exactly once per account. Refund attempt cannot re-grant.
 
-- [ ] **T-116 · Write `MonetizationService` — PendingGrants system**  
+- [x] **T-116 · Write `MonetizationService` — PendingGrants system**  
   If player not found in `Players` when `ProcessReceipt` fires (bought from website): write grant to `PendingGrants_v1[userId]` array. In `DataService.init(player)`: read `PendingGrants_v1[userId]`, apply each grant, clear the entry.  
   **Output:** Purchases made while offline are applied on next login without loss.
 
-- [ ] **T-117 · Write `MonetizationService` — Roblox Premium benefits**  
+- [x] **T-117 · Write `MonetizationService` — Roblox Premium benefits**  
   In `MonetizationService.init(player)`: check `player.MembershipType`. If Premium: set `isPremium = true` in session. `CahayaService` checks this flag and applies +10% to each collection (multiply collected amount by 1.1, floor). Daily reset logic adds +10 bonus Cahaya.  
   **Output:** Premium players collect slightly more Cahaya per orb. Daily bonus applied at reset.
 
-- [ ] **T-118 · Write `Monetization_PurchasePrompt` remote handler**  
+- [x] **T-118 · Write `Monetization_PurchasePrompt` remote handler**  
   Client fires `Monetization_PurchasePrompt { productId }`. Server validates `productId` is in allowed product list (whitelist from `Constants.luau`). Server calls `MarketplaceService:PromptProductPurchase(player, productId)`. Reject unknown product IDs silently.  
   **Output:** Purchase prompt opens correctly via server call. Clients cannot prompt arbitrary product IDs.
 
@@ -753,10 +753,10 @@
 | Phase 16 — Input | T-102 → T-104 | 3 / 3 |
 | Phase 17 — Audio | T-105 → T-106 | 2 / 2 |
 | Phase 18 — Localization | T-107 → T-112 | 6 / 6 |
-| Phase 19 — Monetization | T-113 → T-118 | 0 / 6 |
+| Phase 19 — Monetization | T-113 → T-118 | 6 / 6 |
 | Phase 20 — Multi-Place | T-119 → T-121 | 0 / 3 |
 | Phase 21 — Security | T-122 → T-125 | 0 / 4 |
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **113 / 144** |
+| **TOTAL** | | **119 / 144** |

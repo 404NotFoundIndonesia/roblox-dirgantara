@@ -26,8 +26,10 @@ local Constants  = require(Shared.Constants)
 local Remotes    = require(Shared.Remotes)
 
 -- Lazy-require sibling services to avoid load-order cycles
-local _DataService: any   = nil
-local _FlightService: any = nil
+local _DataService:        any = nil
+local _FlightService:      any = nil
+local _MonetizationService: any = nil
+
 local function getDS(): any
 	if not _DataService then
 		_DataService = require(script.Parent.DataService)
@@ -39,6 +41,12 @@ local function getFS(): any
 		_FlightService = require(script.Parent.FlightService)
 	end
 	return _FlightService
+end
+local function getMonetSvc(): any
+	if not _MonetizationService then
+		_MonetizationService = require(script.Parent.MonetizationService)
+	end
+	return _MonetizationService
 end
 
 local CahayaService = {}
@@ -173,10 +181,13 @@ Remotes.Cahaya_CollectOrb.OnServerEvent:Connect(function(player: Player, payload
 	_orbRegistry[orbId] = nil
 	local orbPos = orbPart.Position
 
-	-- Grant Cahaya
-	data.cahaya             = data.cahaya + ORB_CAHAYA_VALUE
+	-- Grant Cahaya; T-117 Premium players receive +10% per collection (floored).
+	local grant = if getMonetSvc().isPremium(player)
+		then math.floor(ORB_CAHAYA_VALUE * 1.1)
+		else ORB_CAHAYA_VALUE
+	data.cahaya             = data.cahaya + grant
 	data.dailyCahayaCollected = math.min(
-		data.dailyCahayaCollected + ORB_CAHAYA_VALUE,
+		data.dailyCahayaCollected + grant,
 		Constants.DAILY_CAHAYA_CAP
 	)
 
@@ -196,7 +207,7 @@ Remotes.Cahaya_CollectOrb.OnServerEvent:Connect(function(player: Player, payload
 	})
 
 	-- Notify DailyTaskService
-	_cahayaCollectedEvent:Fire(player, { amount = ORB_CAHAYA_VALUE })
+	_cahayaCollectedEvent:Fire(player, { amount = grant })
 
 	-- Schedule respawn after 5 minutes (T-027)
 	task.delay(Constants.ORB_RESPAWN_TIME, function()
