@@ -102,6 +102,6 @@ SeasonDefs["SEASON_01_STARFALL"] = {
 }
 
 -- Active season pointer — overridden by DataStore at runtime
-SeasonDefs._ACTIVE = "SEASON_01_STARFALL"
+;(SeasonDefs :: any)._ACTIVE = "SEASON_01_STARFALL"
 
 return SeasonDefs

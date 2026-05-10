@@ -8,11 +8,9 @@
 
 local Types = require(script.Parent.Types)
 
-local DailyTaskDefs = {}
-
 -- ─── Easy Pool ───────────────────────────────────────────────────────────────
 
-DailyTaskDefs.EasyPool: { Types.TaskDef } = {
+local EasyPool: { Types.TaskDef } = {
 	{
 		id             = "EASY_COLLECT_CAHAYA",
 		difficulty     = "Easy",
@@ -80,7 +78,7 @@ DailyTaskDefs.EasyPool: { Types.TaskDef } = {
 
 -- ─── Medium Pool ─────────────────────────────────────────────────────────────
 
-DailyTaskDefs.MediumPool: { Types.TaskDef } = {
+local MediumPool: { Types.TaskDef } = {
 	{
 		id             = "MED_COLLECT_CAHAYA_60",
 		difficulty     = "Medium",
@@ -133,7 +131,7 @@ DailyTaskDefs.MediumPool: { Types.TaskDef } = {
 
 -- ─── Hard Pool ───────────────────────────────────────────────────────────────
 
-DailyTaskDefs.HardPool: { Types.TaskDef } = {
+local HardPool: { Types.TaskDef } = {
 	{
 		id             = "HARD_SKYS_PEAK",
 		difficulty     = "Hard",
@@ -173,6 +171,12 @@ DailyTaskDefs.HardPool: { Types.TaskDef } = {
 		target         = 100,
 		trackingEvent  = "CahayaCollected",
 	},
+}
+
+local DailyTaskDefs = {
+	EasyPool   = EasyPool,
+	MediumPool = MediumPool,
+	HardPool   = HardPool,
 }
 
 return DailyTaskDefs

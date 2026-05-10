@@ -68,7 +68,7 @@ local RealmDefs: { [string]: Types.RealmDef } = {
 }
 
 -- Ordered list for realm unlock progression display
-RealmDefs._ORDER = {
+;(RealmDefs :: any)._ORDER = {
 	"ISLE_DAWN", "GRASSLAND", "FOREST", "VALLEY",
 	"WASTELAND", "VAULT", "SKYS_PEAK",
 }
