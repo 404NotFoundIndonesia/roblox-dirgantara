@@ -17,10 +17,13 @@
 local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Shared    = ReplicatedStorage:WaitForChild("Shared")
-local Constants = require(Shared.Constants)
-local Remotes   = require(Shared.Remotes)
-local Types     = require(Shared.Types)
+local Shared      = ReplicatedStorage:WaitForChild("Shared")
+local Packages    = ReplicatedStorage:WaitForChild("Packages")
+local Constants   = require(Shared.Constants)
+local Remotes     = require(Shared.Remotes)
+local Types       = require(Shared.Types)
+local RateLimiter = require(Shared.RateLimiter)
+local t           = require(Packages.t)
 
 -- ─── Lazy-requires ────────────────────────────────────────────────────────────
 
@@ -42,6 +45,18 @@ end
 
 local InstrumentService = {}
 
+-- ─── Rate limiters + payload validators (T-123, T-125) ───────────────────────
+-- Replaces the internal per-player rolling window (checkRateLimit).
+
+local _playNoteLimiter     = RateLimiter.new(10, 1)
+local _strumLimiter        = RateLimiter.new(3, 1)
+local _sustainStartLimiter = RateLimiter.new(3, 1)
+local _sustainEndLimiter   = RateLimiter.new(3, 1)
+
+local _validatePlayNote     = t.strictInterface({ instrumentId = t.string, noteIndex = t.number })
+local _validateStrum        = t.strictInterface({ instrumentId = t.string })
+local _validateSustainStart = t.strictInterface({ instrumentId = t.string, noteIndex = t.number })
+
 -- ─── BindableEvents ───────────────────────────────────────────────────────────
 
 local _instrumentPlayedEvent = Instance.new("BindableEvent")
@@ -54,10 +69,7 @@ InstrumentService.HarmoniActive = _harmoniActiveEvent
 
 -- ─── Per-player state ─────────────────────────────────────────────────────────
 
-local _players:       { [number]: Player } = {}
--- Rate limiting: rolling 1-second window
-local _rateWindow:    { [number]: number } = {}   -- os.clock of window start
-local _rateCount:     { [number]: number } = {}   -- notes fired this window
+local _players: { [number]: Player } = {}
 -- Timing for Harmoni detection
 local _lastNoteTime:  { [number]: number } = {}   -- os.clock of last note received
 -- Harmoni state
@@ -86,23 +98,6 @@ local function getNearbyPlayers(origin: Player, range: number): { Player }
 	return result
 end
 
--- T-070: Enforce Constants.INSTRUMENT_RATE_LIMIT notes/sec per player.
-local function checkRateLimit(userId: number): boolean
-	local now = os.clock()
-	local win = _rateWindow[userId] or 0
-	local cnt = _rateCount[userId]  or 0
-
-	if now - win >= 1.0 then
-		_rateWindow[userId] = now
-		_rateCount[userId]  = 1
-		return true
-	end
-
-	cnt += 1
-	_rateCount[userId] = cnt
-	return cnt <= Constants.INSTRUMENT_RATE_LIMIT
-end
-
 -- T-070: Validate the player owns and has equipped the given instrument.
 local function validateInstrument(player: Player, instrumentId: string): boolean
 	local data = getDS().get(player) :: Types.PlayerData?
@@ -120,13 +115,13 @@ end
 
 Remotes.Instrument_PlayNote.OnServerEvent:Connect(function(player: Player, payload: any)
 	local userId = player.UserId
+	if not _playNoteLimiter.check(userId) then return end
+	if not _validatePlayNote(payload) then return end
 	if not _players[userId] then return end
 
-	local instrumentId = payload and payload.instrumentId
-	local noteIndex    = payload and payload.noteIndex
-	if type(instrumentId) ~= "string" or type(noteIndex) ~= "number" then return end
+	local instrumentId = payload.instrumentId :: string
+	local noteIndex    = payload.noteIndex :: number
 	if not validateInstrument(player, instrumentId) then return end
-	if not checkRateLimit(userId) then return end
 
 	markPlaying(userId)
 
@@ -142,12 +137,12 @@ end)
 
 Remotes.Instrument_Strum.OnServerEvent:Connect(function(player: Player, payload: any)
 	local userId = player.UserId
+	if not _strumLimiter.check(userId) then return end
+	if not _validateStrum(payload) then return end
 	if not _players[userId] then return end
 
-	local instrumentId = payload and payload.instrumentId
-	if type(instrumentId) ~= "string" then return end
+	local instrumentId = payload.instrumentId :: string
 	if not validateInstrument(player, instrumentId) then return end
-	-- No rate limit for strum: one discrete event per physical action
 
 	markPlaying(userId)
 
@@ -159,11 +154,12 @@ end)
 
 Remotes.Instrument_SustainStart.OnServerEvent:Connect(function(player: Player, payload: any)
 	local userId = player.UserId
+	if not _sustainStartLimiter.check(userId) then return end
+	if not _validateSustainStart(payload) then return end
 	if not _players[userId] then return end
 
-	local instrumentId = payload and payload.instrumentId
-	local noteIndex    = payload and payload.noteIndex
-	if type(instrumentId) ~= "string" or type(noteIndex) ~= "number" then return end
+	local instrumentId = payload.instrumentId :: string
+	local noteIndex    = payload.noteIndex :: number
 	if not validateInstrument(player, instrumentId) then return end
 
 	markPlaying(userId)
@@ -181,6 +177,7 @@ end)
 
 Remotes.Instrument_SustainEnd.OnServerEvent:Connect(function(player: Player)
 	local userId = player.UserId
+	if not _sustainEndLimiter.check(userId) then return end
 	if not _players[userId] then return end
 
 	local data = getDS().get(player) :: Types.PlayerData?
@@ -312,10 +309,8 @@ end
 
 function InstrumentService.init(player: Player)
 	local userId = player.UserId
-	_players[userId]       = player
-	_rateWindow[userId]    = 0
-	_rateCount[userId]     = 0
-	_lastNoteTime[userId]  = 0
+	_players[userId]      = player
+	_lastNoteTime[userId] = 0
 	_harmoniActive[userId] = false
 end
 
@@ -325,10 +320,12 @@ function InstrumentService.cleanup(player: Player)
 		-- Clear Harmoni bonus server-side; no remote needed (player is leaving)
 		getFlightSvc().setHarmoni(player, false)
 	end
-	_players[userId]       = nil
-	_rateWindow[userId]    = nil
-	_rateCount[userId]     = nil
-	_lastNoteTime[userId]  = nil
+	_playNoteLimiter.cleanup(userId)
+	_strumLimiter.cleanup(userId)
+	_sustainStartLimiter.cleanup(userId)
+	_sustainEndLimiter.cleanup(userId)
+	_players[userId]      = nil
+	_lastNoteTime[userId] = nil
 	_harmoniActive[userId] = nil
 end
 

@@ -16,11 +16,14 @@ local Players            = game:GetService("Players")
 local TeleportService    = game:GetService("TeleportService")
 local ReplicatedStorage  = game:GetService("ReplicatedStorage")
 
-local Shared      = ReplicatedStorage:WaitForChild("Shared")
-local Constants   = require(Shared.Constants)
-local RealmDefs   = require(Shared.RealmDefs)
+local Shared       = ReplicatedStorage:WaitForChild("Shared")
+local Packages     = ReplicatedStorage:WaitForChild("Packages")
+local Constants    = require(Shared.Constants)
+local RealmDefs    = require(Shared.RealmDefs)
 local CosmeticDefs = require(Shared.CosmeticDefs)
-local Remotes     = require(Shared.Remotes)
+local Remotes      = require(Shared.Remotes)
+local RateLimiter  = require(Shared.RateLimiter)
+local t            = require(Packages.t)
 
 -- Lazy-require sibling services to avoid load-order cycles
 local _DataService:     any = nil
@@ -47,6 +50,20 @@ local function getCosmSvc(): any
 end
 
 local IkatanService = {}
+
+-- ─── Rate limiters + payload validators (T-123, T-125) ───────────────────────
+
+local _offerLimiter    = RateLimiter.new(1, 1)
+local _acceptLimiter   = RateLimiter.new(3, 1)
+local _declineLimiter  = RateLimiter.new(3, 1)
+local _teleportLimiter = RateLimiter.new(3, 1)
+local _ikatanGiftLimiter = RateLimiter.new(3, 1)
+
+local _validateOffer    = t.strictInterface({ targetUserId = t.number })
+local _validateAccept   = t.strictInterface({ fromUserId = t.number })
+local _validateDecline  = t.strictInterface({ fromUserId = t.number })
+local _validateTeleport = t.strictInterface({ targetUserId = t.number })
+local _validateIkatanGift = t.strictInterface({ targetUserId = t.number, itemId = t.string })
 
 -- ─── BindableEvent exposed for DailyTaskService ───────────────────────────────
 
@@ -163,14 +180,13 @@ end
 
 Remotes.Ikatan_OfferRequest.OnServerEvent:Connect(function(sender: Player, payload: any)
 	local senderId = sender.UserId
+	if not _offerLimiter.check(senderId) then return end
+	if not _validateOffer(payload) then return end
 	if not _players[senderId] then
 		return
 	end
 
-	local targetUserId = payload and payload.targetUserId
-	if type(targetUserId) ~= "number" then
-		return
-	end
+	local targetUserId = payload.targetUserId :: number
 
 	local target = Players:GetPlayerByUserId(targetUserId)
 	if not target then
@@ -230,14 +246,13 @@ end)
 
 Remotes.Ikatan_AcceptRequest.OnServerEvent:Connect(function(acceptor: Player, payload: any)
 	local acceptorId = acceptor.UserId
+	if not _acceptLimiter.check(acceptorId) then return end
+	if not _validateAccept(payload) then return end
 	if not _players[acceptorId] then
 		return
 	end
 
-	local fromUserId = payload and payload.fromUserId
-	if type(fromUserId) ~= "number" then
-		return
-	end
+	local fromUserId = payload.fromUserId :: number
 
 	-- Validate pending offer
 	local offer = _pendingOffers[acceptorId]
@@ -317,13 +332,12 @@ Remotes.Ikatan_AcceptRequest.OnServerEvent:Connect(function(acceptor: Player, pa
 end)
 
 Remotes.Ikatan_DeclineRequest.OnServerEvent:Connect(function(decliner: Player, payload: any)
+	if not _declineLimiter.check(decliner.UserId) then return end
+	if not _validateDecline(payload) then return end
 	if not _players[decliner.UserId] then
 		return
 	end
-	local fromUserId = payload and payload.fromUserId
-	if type(fromUserId) ~= "number" then
-		return
-	end
+	local fromUserId = payload.fromUserId :: number
 	-- Only clear if the offer is from the stated sender
 	local offer = _pendingOffers[decliner.UserId]
 	if offer and offer.fromUserId == fromUserId then
@@ -335,14 +349,13 @@ end)
 
 Remotes.Ikatan_TeleportRequest.OnServerEvent:Connect(function(sender: Player, payload: any)
 	local senderId = sender.UserId
+	if not _teleportLimiter.check(senderId) then return end
+	if not _validateTeleport(payload) then return end
 	if not _players[senderId] then
 		return
 	end
 
-	local targetUserId = payload and payload.targetUserId
-	if type(targetUserId) ~= "number" then
-		return
-	end
+	local targetUserId = payload.targetUserId :: number
 
 	local data = getDS().get(sender)
 	if not data then
@@ -396,15 +409,14 @@ end)
 
 Remotes.Ikatan_GiftRequest.OnServerEvent:Connect(function(sender: Player, payload: any)
 	local senderId = sender.UserId
+	if not _ikatanGiftLimiter.check(senderId) then return end
+	if not _validateIkatanGift(payload) then return end
 	if not _players[senderId] then
 		return
 	end
 
-	local targetUserId = payload and payload.targetUserId
-	local itemId       = payload and payload.itemId
-	if type(targetUserId) ~= "number" or type(itemId) ~= "string" then
-		return
-	end
+	local targetUserId = payload.targetUserId :: number
+	local itemId       = payload.itemId :: string
 
 	local senderData = getDS().get(sender)
 	if not senderData then
@@ -527,6 +539,11 @@ end
 
 function IkatanService.cleanup(player: Player)
 	local userId = player.UserId
+	_offerLimiter.cleanup(userId)
+	_acceptLimiter.cleanup(userId)
+	_declineLimiter.cleanup(userId)
+	_teleportLimiter.cleanup(userId)
+	_ikatanGiftLimiter.cleanup(userId)
 
 	-- Cancel presence refresh loop
 	local thread = _presenceThreads[userId]

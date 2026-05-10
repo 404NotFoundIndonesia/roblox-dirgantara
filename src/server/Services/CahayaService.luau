@@ -21,9 +21,12 @@ local CollectionService = game:GetService("CollectionService")
 local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Shared     = ReplicatedStorage:WaitForChild("Shared")
-local Constants  = require(Shared.Constants)
-local Remotes    = require(Shared.Remotes)
+local Shared      = ReplicatedStorage:WaitForChild("Shared")
+local Packages    = ReplicatedStorage:WaitForChild("Packages")
+local Constants   = require(Shared.Constants)
+local Remotes     = require(Shared.Remotes)
+local RateLimiter = require(Shared.RateLimiter)
+local t           = require(Packages.t)
 
 -- Lazy-require sibling services to avoid load-order cycles
 local _DataService:        any = nil
@@ -50,6 +53,16 @@ local function getMonetSvc(): any
 end
 
 local CahayaService = {}
+
+-- ─── Rate limiters + payload validators (T-123, T-125) ───────────────────────
+
+local _collectOrbLimiter = RateLimiter.new(5, 1)
+local _reviveLimiter     = RateLimiter.new(3, 1)
+local _giftLimiter       = RateLimiter.new(3, 1)
+
+local _validateCollectOrb = t.strictInterface({ orbId = t.string, position = t.Vector3 })
+local _validateRevive     = t.strictInterface({ targetUserId = t.number })
+local _validateGift       = t.strictInterface({ targetUserId = t.number, amount = t.number })
 
 -- ─── BindableEvent exposed for DailyTaskService ───────────────────────────────
 
@@ -149,6 +162,8 @@ end
 -- ─── T-026: Orb collection remote ─────────────────────────────────────────────
 
 Remotes.Cahaya_CollectOrb.OnServerEvent:Connect(function(player: Player, payload: any)
+	if not _collectOrbLimiter.check(player.UserId) then return end
+	if not _validateCollectOrb(payload) then return end
 	local data = getDS().get(player)
 	if not data then return end
 
@@ -218,8 +233,9 @@ end)
 -- ─── T-029: Revive remote ─────────────────────────────────────────────────────
 
 Remotes.Cahaya_ReviveRequest.OnServerEvent:Connect(function(rescuer: Player, payload: any)
-	local targetId = payload and payload.targetUserId
-	if type(targetId) ~= "number" then return end
+	if not _reviveLimiter.check(rescuer.UserId) then return end
+	if not _validateRevive(payload) then return end
+	local targetId = payload.targetUserId :: number
 
 	local target = Players:GetPlayerByUserId(targetId)
 	if not target then
@@ -234,9 +250,11 @@ end)
 -- ─── T-030: Gift remote ───────────────────────────────────────────────────────
 
 Remotes.Cahaya_GiftRequest.OnServerEvent:Connect(function(giver: Player, payload: any)
-	local targetId = payload and payload.targetUserId
-	local amount   = payload and payload.amount
-	if type(targetId) ~= "number" or type(amount) ~= "number" or amount <= 0 then return end
+	if not _giftLimiter.check(giver.UserId) then return end
+	if not _validateGift(payload) then return end
+	local targetId = payload.targetUserId :: number
+	local amount   = payload.amount :: number
+	if amount <= 0 then return end
 
 	local recipient = Players:GetPlayerByUserId(targetId)
 	if not recipient then
@@ -474,6 +492,9 @@ end
 
 function CahayaService.cleanup(player: Player)
 	local userId = player.UserId
+	_collectOrbLimiter.cleanup(userId)
+	_reviveLimiter.cleanup(userId)
+	_giftLimiter.cleanup(userId)
 
 	-- Cancel checkpoint loop
 	local thread = _checkpointThreads[userId]

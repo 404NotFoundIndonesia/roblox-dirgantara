@@ -30,9 +30,12 @@ local Players           = game:GetService("Players")
 local RunService        = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Shared    = ReplicatedStorage:WaitForChild("Shared")
-local Constants = require(Shared.Constants)
-local Remotes   = require(Shared.Remotes)
+local Shared      = ReplicatedStorage:WaitForChild("Shared")
+local Packages    = ReplicatedStorage:WaitForChild("Packages")
+local Constants   = require(Shared.Constants)
+local Remotes     = require(Shared.Remotes)
+local RateLimiter = require(Shared.RateLimiter)
+local t           = require(Packages.t)
 
 -- Lazy-require services
 local _DataService:    any = nil
@@ -65,6 +68,14 @@ local function getNGA(): any
 end
 
 local KegelapanService = {}
+
+-- ─── Rate limiters + payload validators (T-123, T-125) ───────────────────────
+
+local _dimLimiter       = RateLimiter.new(3, 1)
+local _petiOpenLimiter  = RateLimiter.new(3, 1)
+
+local _validatePetiOpen = t.strictInterface({ chestId = t.string })
+-- Kegelapan_DimRequest carries no payload.
 
 -- ─── BindableEvent exposed for DailyTaskService ───────────────────────────────
 
@@ -267,6 +278,7 @@ end)
 
 Remotes.Kegelapan_DimRequest.OnServerEvent:Connect(function(player: Player)
 	local userId = player.UserId
+	if not _dimLimiter.check(userId) then return end
 	if not _players[userId] then return end
 
 	_isDimmed[userId] = not (_isDimmed[userId] == true)
@@ -299,10 +311,11 @@ end)
 
 Remotes.PetiCahaya_Open.OnServerEvent:Connect(function(player: Player, payload: any)
 	local userId  = player.UserId
+	if not _petiOpenLimiter.check(userId) then return end
+	if not _validatePetiOpen(payload) then return end
 	if not _players[userId] then return end
 
-	local chestId = payload and payload.chestId
-	if type(chestId) ~= "string" then return end
+	local chestId = payload.chestId :: string
 
 	-- Chest must be registered
 	local chestPart = _chestData[chestId]
@@ -373,6 +386,8 @@ end
 
 function KegelapanService.cleanup(player: Player)
 	local userId = player.UserId
+	_dimLimiter.cleanup(userId)
+	_petiOpenLimiter.cleanup(userId)
 
 	-- Notify cross-service state if still flagged
 	if KegelapanService.isInAnyZone(player) then

@@ -25,6 +25,7 @@ local Constants    = require(Shared.Constants)
 local Remotes      = require(Shared.Remotes)
 local Types        = require(Shared.Types)
 local RealmDefs    = require(Shared.RealmDefs)
+local RateLimiter  = require(Shared.RateLimiter)
 
 -- ─── Lazy-requires ────────────────────────────────────────────────────────────
 
@@ -62,6 +63,10 @@ local function getKS(): any
 end
 
 local SkysPeakService = {}
+
+-- ─── Rate limiter (T-123) ─────────────────────────────────────────────────────
+
+local _sacrificeLimiter = RateLimiter.new(3, 1)
 
 -- ─── BindableEvent ────────────────────────────────────────────────────────────
 
@@ -232,6 +237,7 @@ end
 
 Remotes.SkysPeak_Sacrifice.OnServerEvent:Connect(function(player: Player)
 	local userId = player.UserId
+	if not _sacrificeLimiter.check(userId) then return end
 	if not _players[userId] then return end
 	if _states[userId] ~= "SUMMIT" then return end
 
@@ -309,6 +315,7 @@ end
 
 function SkysPeakService.cleanup(player: Player)
 	local userId = player.UserId
+	_sacrificeLimiter.cleanup(userId)
 
 	-- If mid-run, flag persists across reconnect; cleared in init on next join
 	-- (no penalty: T-089)

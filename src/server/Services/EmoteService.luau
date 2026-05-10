@@ -16,10 +16,13 @@
 local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Shared    = ReplicatedStorage:WaitForChild("Shared")
-local Constants = require(Shared.Constants)
-local Remotes   = require(Shared.Remotes)
-local Types     = require(Shared.Types)
+local Shared      = ReplicatedStorage:WaitForChild("Shared")
+local Packages    = ReplicatedStorage:WaitForChild("Packages")
+local Constants   = require(Shared.Constants)
+local Remotes     = require(Shared.Remotes)
+local Types       = require(Shared.Types)
+local RateLimiter = require(Shared.RateLimiter)
+local t           = require(Packages.t)
 
 -- ─── Lazy-requires ────────────────────────────────────────────────────────────
 
@@ -40,6 +43,11 @@ local function getFlightSvc(): any
 end
 
 local EmoteService = {}
+
+-- ─── Rate limiter + payload validator (T-123, T-125) ─────────────────────────
+
+local _emoteLimiter  = RateLimiter.new(2, 1)
+local _validateEmote = t.strictInterface({ emoteId = t.string })
 
 -- ─── BindableEvent ────────────────────────────────────────────────────────────
 
@@ -117,10 +125,12 @@ end
 
 Remotes.Emote_PlayRequest.OnServerEvent:Connect(function(player: Player, payload: any)
 	local userId = player.UserId
+	if not _emoteLimiter.check(userId) then return end
+	if not _validateEmote(payload) then return end
 	if not _players[userId] then return end
 
-	local emoteId = payload and payload.emoteId
-	if type(emoteId) ~= "string" or emoteId == "" then return end
+	local emoteId = payload.emoteId :: string
+	if emoteId == "" then return end
 
 	local data = getDS().get(player) :: Types.PlayerData?
 	if not data then return end
@@ -196,6 +206,7 @@ end
 
 function EmoteService.cleanup(player: Player)
 	local userId = player.UserId
+	_emoteLimiter.cleanup(userId)
 	_players[userId]     = nil
 	_activeEmote[userId] = nil
 end

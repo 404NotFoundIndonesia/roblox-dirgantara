@@ -16,11 +16,14 @@ local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace         = game:GetService("Workspace")
 
-local Shared     = ReplicatedStorage:WaitForChild("Shared")
-local Constants  = require(Shared.Constants)
-local Remotes    = require(Shared.Remotes)
-local SeasonDefs = require(Shared.SeasonDefs)
-local Types      = require(Shared.Types)
+local Shared      = ReplicatedStorage:WaitForChild("Shared")
+local Packages    = ReplicatedStorage:WaitForChild("Packages")
+local Constants   = require(Shared.Constants)
+local Remotes     = require(Shared.Remotes)
+local SeasonDefs  = require(Shared.SeasonDefs)
+local Types       = require(Shared.Types)
+local RateLimiter = require(Shared.RateLimiter)
+local t           = require(Packages.t)
 
 -- ─── Lazy-requires ────────────────────────────────────────────────────────────
 
@@ -83,6 +86,11 @@ local function getDailyTaskSvc(): any
 end
 
 local SeasonService = {}
+
+-- ─── Rate limiter + payload validator (T-123, T-125) ─────────────────────────
+
+local _buyItemLimiter   = RateLimiter.new(3, 1)
+local _validateBuyItem  = t.strictInterface({ itemId = t.string })
 
 -- ─── Module state ─────────────────────────────────────────────────────────────
 
@@ -376,10 +384,13 @@ end
 -- ─── T-069: Koin Musim shop ───────────────────────────────────────────────────
 
 Remotes.KoinShop_BuyItem.OnServerEvent:Connect(function(player: Player, payload: any)
-	if not _players[player.UserId] then return end
+	local userId = player.UserId
+	if not _buyItemLimiter.check(userId) then return end
+	if not _validateBuyItem(payload) then return end
+	if not _players[userId] then return end
 
-	local itemId = payload and payload.itemId
-	if type(itemId) ~= "string" or itemId == "" then return end
+	local itemId = payload.itemId :: string
+	if itemId == "" then return end
 
 	local data = getDS().get(player) :: Types.PlayerData?
 	if not data then return end
@@ -430,7 +441,9 @@ function SeasonService.init(player: Player)
 end
 
 function SeasonService.cleanup(player: Player)
-	_players[player.UserId] = nil
+	local userId = player.UserId
+	_buyItemLimiter.cleanup(userId)
+	_players[userId] = nil
 end
 
 -- ─── Module init ──────────────────────────────────────────────────────────────

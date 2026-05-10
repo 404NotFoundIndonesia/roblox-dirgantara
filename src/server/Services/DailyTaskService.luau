@@ -12,10 +12,13 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared        = ReplicatedStorage:WaitForChild("Shared")
+local Packages      = ReplicatedStorage:WaitForChild("Packages")
 local Constants     = require(Shared.Constants)
 local Remotes       = require(Shared.Remotes)
 local DailyTaskDefs = require(Shared.DailyTaskDefs)
 local Types         = require(Shared.Types)
+local RateLimiter   = require(Shared.RateLimiter)
+local t             = require(Packages.t)
 
 -- ─── Lazy-requires ────────────────────────────────────────────────────────────
 
@@ -100,6 +103,14 @@ end
 
 local DailyTaskService = {}
 
+-- ─── Rate limiters + payload validators (T-123, T-125) ───────────────────────
+
+local _claimMilestoneLimiter = RateLimiter.new(3, 1)
+local _claimWeeklyLimiter    = RateLimiter.new(3, 1)
+local _claimMonthlyLimiter   = RateLimiter.new(3, 1)
+
+local _validateClaimMilestone = t.strictInterface({ tier = t.number })
+
 -- ─── BindableEvent ────────────────────────────────────────────────────────────
 
 local _dailyFullClearEvent = Instance.new("BindableEvent")
@@ -117,8 +128,8 @@ local UTC7_OFFSET = 7 * 3600
 
 -- Returns "YYYYMMDD" string for today in UTC+7.
 local function getTodayString(): string
-	local t = os.time() + UTC7_OFFSET
-	local d = os.date("!*t", t) :: any
+	local ts = os.time() + UTC7_OFFSET
+	local d  = os.date("!*t", ts) :: any
 	return string.format("%04d%02d%02d", d.year, d.month, d.day)
 end
 
@@ -129,8 +140,8 @@ end
 
 -- "YYYY-MM" for current month in UTC+7.
 local function getMonthString(): string
-	local t = os.time() + UTC7_OFFSET
-	local d = os.date("!*t", t) :: any
+	local ts = os.time() + UTC7_OFFSET
+	local d  = os.date("!*t", ts) :: any
 	return string.format("%04d-%02d", d.year, d.month)
 end
 
@@ -302,10 +313,11 @@ end
 
 Remotes.DailyTask_ClaimMilestone.OnServerEvent:Connect(function(player: Player, payload: any)
 	local userId = player.UserId
+	if not _claimMilestoneLimiter.check(userId) then return end
+	if not _validateClaimMilestone(payload) then return end
 	if not _players[userId] then return end
 
-	local tier = payload and payload.tier
-	if type(tier) ~= "number" then return end
+	local tier = payload.tier :: number
 	if tier < 1 or tier > #Constants.MILESTONE_THRESHOLDS then return end
 
 	local data = getDS().get(player)
@@ -380,6 +392,7 @@ end)
 
 Remotes.DailyTask_ClaimWeekly.OnServerEvent:Connect(function(player: Player)
 	local userId = player.UserId
+	if not _claimWeeklyLimiter.check(userId) then return end
 	if not _players[userId] then return end
 
 	local data = getDS().get(player)
@@ -419,6 +432,7 @@ end)
 
 Remotes.DailyTask_ClaimMonthly.OnServerEvent:Connect(function(player: Player)
 	local userId = player.UserId
+	if not _claimMonthlyLimiter.check(userId) then return end
 	if not _players[userId] then return end
 
 	local data = getDS().get(player)
@@ -686,7 +700,11 @@ function DailyTaskService.init(player: Player)
 end
 
 function DailyTaskService.cleanup(player: Player)
-	_players[player.UserId] = nil
+	local userId = player.UserId
+	_claimMilestoneLimiter.cleanup(userId)
+	_claimWeeklyLimiter.cleanup(userId)
+	_claimMonthlyLimiter.cleanup(userId)
+	_players[userId] = nil
 end
 
 return DailyTaskService

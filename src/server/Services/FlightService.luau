@@ -21,10 +21,13 @@ local Players           = game:GetService("Players")
 local RunService        = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Shared     = ReplicatedStorage:WaitForChild("Shared")
-local Constants  = require(Shared.Constants)
-local WingDefs   = require(Shared.WingDefs)
-local Remotes    = require(Shared.Remotes)
+local Shared      = ReplicatedStorage:WaitForChild("Shared")
+local Packages    = ReplicatedStorage:WaitForChild("Packages")
+local Constants   = require(Shared.Constants)
+local WingDefs    = require(Shared.WingDefs)
+local Remotes     = require(Shared.Remotes)
+local RateLimiter = require(Shared.RateLimiter)
+local t           = require(Packages.t)
 
 -- DataService required lazily to avoid load-order issues
 local _DataService: any = nil
@@ -37,6 +40,17 @@ local function getDataService(): any
 end
 
 local FlightService = {}
+
+-- ─── Rate limiters + payload validators (T-123, T-125) ───────────────────────
+
+local _boostLimiter       = RateLimiter.new(3, 1)
+local _carryRequestLimiter = RateLimiter.new(3, 1)
+local _carryAcceptLimiter  = RateLimiter.new(3, 1)
+local _carryEndLimiter     = RateLimiter.new(3, 1)
+
+local _validateBoost       = t.strictInterface({ position = t.Vector3, velocity = t.Vector3 })
+local _validateCarryRequest = t.strictInterface({ targetUserId = t.number })
+local _validateCarryAccept  = t.strictInterface({ carrierUserId = t.number })
 
 -- ─── BindableEvents exposed for DailyTaskService ─────────────────────────────
 
@@ -192,6 +206,8 @@ end)
 
 Remotes.Flight_RequestBoost.OnServerEvent:Connect(function(player: Player, payload: any)
 	local userId = player.UserId
+	if not _boostLimiter.check(userId) then return end
+	if not _validateBoost(payload) then return end
 	local state  = _charge[userId]
 	if not state then return end
 	if _isExtinguished[userId] then
@@ -242,8 +258,9 @@ end)
 
 Remotes.Flight_CarryRequest.OnServerEvent:Connect(function(carrier: Player, payload: any)
 	local carrierId = carrier.UserId
-	local targetId  = payload and payload.targetUserId
-	if type(targetId) ~= "number" then return end
+	if not _carryRequestLimiter.check(carrierId) then return end
+	if not _validateCarryRequest(payload) then return end
+	local targetId = payload.targetUserId :: number
 
 	local chargeState = _charge[carrierId]
 	if not chargeState then return end
@@ -278,9 +295,10 @@ Remotes.Flight_CarryRequest.OnServerEvent:Connect(function(carrier: Player, payl
 end)
 
 Remotes.Flight_CarryAccept.OnServerEvent:Connect(function(carried: Player, payload: any)
-	local carriedId  = carried.UserId
-	local carrierId  = payload and payload.carrierUserId
-	if type(carrierId) ~= "number" then return end
+	local carriedId = carried.UserId
+	if not _carryAcceptLimiter.check(carriedId) then return end
+	if not _validateCarryAccept(payload) then return end
+	local carrierId = payload.carrierUserId :: number
 
 	-- Validate the pending offer matches
 	if _pendingOffer[carriedId] ~= carrierId then return end
@@ -319,6 +337,7 @@ end)
 
 Remotes.Flight_CarryEnd.OnServerEvent:Connect(function(player: Player)
 	local userId = player.UserId
+	if not _carryEndLimiter.check(userId) then return end
 	if _isCarrying[userId] then
 		endCarry(userId, _isCarrying[userId] :: number)
 	elseif _isCarried[userId] then
@@ -446,6 +465,10 @@ end
 
 function FlightService.cleanup(player: Player)
 	local userId = player.UserId
+	_boostLimiter.cleanup(userId)
+	_carryRequestLimiter.cleanup(userId)
+	_carryAcceptLimiter.cleanup(userId)
+	_carryEndLimiter.cleanup(userId)
 
 	-- End carry on either side
 	if _isCarrying[userId] then

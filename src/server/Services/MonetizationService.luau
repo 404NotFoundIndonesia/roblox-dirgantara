@@ -19,11 +19,14 @@ local Players            = game:GetService("Players")
 local ReplicatedStorage  = game:GetService("ReplicatedStorage")
 
 local Shared       = ReplicatedStorage:WaitForChild("Shared")
+local Packages     = ReplicatedStorage:WaitForChild("Packages")
 local Constants    = require(Shared.Constants)
 local CosmeticDefs = require(Shared.CosmeticDefs)
 local SpiritDefs   = require(Shared.SpiritDefs)
 local Remotes      = require(Shared.Remotes)
 local Types        = require(Shared.Types)
+local RateLimiter  = require(Shared.RateLimiter)
+local t            = require(Packages.t)
 
 -- ─── Lazy-requires (avoid circular deps) ─────────────────────────────────────
 
@@ -61,6 +64,11 @@ local function getSeasSvc(): any
 end
 
 local MonetizationService = {}
+
+-- ─── Rate limiter + payload validator (T-123, T-125) ─────────────────────────
+
+local _purchasePromptLimiter  = RateLimiter.new(3, 1)
+local _validatePurchasePrompt = t.strictInterface({ productId = t.number })
 
 -- ─── T-117: Premium session state ─────────────────────────────────────────────
 
@@ -281,8 +289,11 @@ end
 -- ─── T-118: PurchasePrompt remote handler ────────────────────────────────────
 
 Remotes.Monetization_PurchasePrompt.OnServerEvent:Connect(function(player: Player, payload: any)
-	local productId = payload and payload.productId
-	if type(productId) ~= "number" then return end
+	local userId = player.UserId
+	if not _purchasePromptLimiter.check(userId) then return end
+	if not _validatePurchasePrompt(payload) then return end
+
+	local productId = payload.productId :: number
 
 	-- Whitelist validation: only explicitly allowed product IDs pass.
 	local allowed = Constants.ALLOWED_PRODUCT_IDS
@@ -299,7 +310,9 @@ function MonetizationService.init(player: Player)
 end
 
 function MonetizationService.cleanup(player: Player)
-	_isPremium[player.UserId] = nil
+	local userId = player.UserId
+	_purchasePromptLimiter.cleanup(userId)
+	_isPremium[userId] = nil
 end
 
 return MonetizationService

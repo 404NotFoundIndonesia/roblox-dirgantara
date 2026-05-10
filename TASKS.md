@@ -600,19 +600,19 @@
 
 ## Phase 21 — Security & Anti-Exploit
 
-- [ ] **T-122 · Write shared rate limiter module**  
+- [x] **T-122 · Write shared rate limiter module**  
   `shared/RateLimiter.luau`: `RateLimiter.new(maxCalls, intervalSeconds)` returns a limiter. `limiter:check(userId): boolean` returns true if under limit, false if exceeded. Track per-userId call timestamps in a sliding window. On second offense within 60s: call `Players:GetPlayerByUserId(userId):Kick("Unusual activity detected.")`.  
   **Output:** Rate limiter correctly rejects calls above threshold. Second offense kicks player. Limiter resets correctly per interval.
 
-- [ ] **T-123 · Apply rate limiters to all remotes**  
+- [x] **T-123 · Apply rate limiters to all remotes**  
   Instantiate `RateLimiter` per remote per the limits table in PRD §22.2. Apply in every `OnServerEvent` handler before any logic runs. Log first offense to `warn()`.  
   **Output:** Every C→S remote has a rate limit applied. Rapid-fire exploit attempts silently dropped then kick on repeat.
 
-- [ ] **T-124 · Write position validator module**  
+- [x] **T-124 · Write position validator module**  
   `shared/PositionValidator.luau`: `PositionValidator.isNear(playerPos, targetPos, maxStuds): boolean`. Used by all services that require proximity (orb collection, spirit, Ikatan, revive). Single source of truth for proximity logic.  
   **Output:** All proximity checks use this module. Changing the threshold requires editing one file.
 
-- [ ] **T-125 · Apply `t` payload validation to all remotes**  
+- [x] **T-125 · Apply `t` payload validation to all remotes**  
   For each `OnServerEvent` handler: define a `t.strictInterface` validator for the expected payload shape. If validation fails: silently return (no error thrown to server). Prevents type-error exploits from sending malformed payloads.  
   **Output:** Malformed remote payloads are dropped before reaching any game logic. No Luau errors from bad client data.
 
@@ -755,8 +755,8 @@
 | Phase 18 — Localization | T-107 → T-112 | 6 / 6 |
 | Phase 19 — Monetization | T-113 → T-118 | 6 / 6 |
 | Phase 20 — Multi-Place | T-119 → T-121 | 3 / 3 |
-| Phase 21 — Security | T-122 → T-125 | 0 / 4 |
+| Phase 21 — Security | T-122 → T-125 | 4 / 4 |
 | Phase 22 — Performance | T-126 → T-128 | 0 / 3 |
 | Phase 23 — Error Handling | T-129 → T-132 | 0 / 4 |
 | Phase 24 — Testing | T-133 → T-142 | 0 / 10 |
-| **TOTAL** | | **122 / 144** |
+| **TOTAL** | | **126 / 144** |

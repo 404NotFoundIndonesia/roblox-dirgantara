@@ -14,11 +14,14 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Shared     = ReplicatedStorage:WaitForChild("Shared")
-local Constants  = require(Shared.Constants)
-local WingDefs   = require(Shared.WingDefs)
-local RealmDefs  = require(Shared.RealmDefs)
-local Remotes    = require(Shared.Remotes)
+local Shared      = ReplicatedStorage:WaitForChild("Shared")
+local Packages    = ReplicatedStorage:WaitForChild("Packages")
+local Constants   = require(Shared.Constants)
+local WingDefs    = require(Shared.WingDefs)
+local RealmDefs   = require(Shared.RealmDefs)
+local Remotes     = require(Shared.Remotes)
+local RateLimiter = require(Shared.RateLimiter)
+local t           = require(Packages.t)
 
 -- Lazy-require sibling services to avoid load-order cycles
 local _DataService:     any = nil
@@ -47,6 +50,12 @@ local function getSPS(): any
 end
 
 local WingService = {}
+
+-- ─── Rate limiters (T-123) ────────────────────────────────────────────────────
+
+local _upgradeLimiter = RateLimiter.new(3, 1)
+-- Wing_UpgradeRequest carries no payload; t not needed.
+local _ = t   -- suppress unused-local for t (required for consistency with other services)
 
 -- ─── T-120: Current realm (derived from game.PlaceId at startup) ──────────────
 
@@ -100,6 +109,7 @@ end
 -- ─── T-032: Upgrade remote ────────────────────────────────────────────────────
 
 Remotes.Wing_UpgradeRequest.OnServerEvent:Connect(function(player: Player)
+	if not _upgradeLimiter.check(player.UserId) then return end
 	local data = getDS().get(player)
 	if not data then return end
 
@@ -226,6 +236,7 @@ end
 
 function WingService.cleanup(player: Player)
 	local userId = player.UserId
+	_upgradeLimiter.cleanup(userId)
 	_players[userId]  = nil
 	_lastRank[userId] = nil
 end

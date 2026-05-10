@@ -16,10 +16,13 @@ local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared       = ReplicatedStorage:WaitForChild("Shared")
+local Packages     = ReplicatedStorage:WaitForChild("Packages")
 local Constants    = require(Shared.Constants)
 local Remotes      = require(Shared.Remotes)
 local Types        = require(Shared.Types)
 local CosmeticDefs = require(Shared.CosmeticDefs)
+local RateLimiter  = require(Shared.RateLimiter)
+local t            = require(Packages.t)
 
 -- ─── Lazy-requires ────────────────────────────────────────────────────────────
 
@@ -41,6 +44,11 @@ local function getWS(): any
 end
 
 local CosmeticService = {}
+
+-- ─── Rate limiter + payload validator (T-123, T-125) ─────────────────────────
+
+local _equipLimiter   = RateLimiter.new(3, 1)
+local _validateEquip  = t.strictInterface({ slot = t.string, itemId = t.optional(t.string) })
 
 -- ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -132,9 +140,12 @@ local SINGLE_SLOTS: { [string]: boolean } = {
 -- ─── T-081: Equip handler ─────────────────────────────────────────────────────
 
 Remotes.Cosmetic_EquipRequest.OnServerEvent:Connect(function(player: Player, payload: any)
-	local slot   = payload and payload.slot
-	local itemId = payload and payload.itemId
-	if type(slot) ~= "string" then return end
+	local userId = player.UserId
+	if not _equipLimiter.check(userId) then return end
+	if not _validateEquip(payload) then return end
+
+	local slot   = payload.slot :: string
+	local itemId = payload.itemId :: string?
 
 	local data = getDS().get(player) :: Types.PlayerData?
 	if not data then return end
@@ -217,7 +228,8 @@ function CosmeticService.init(player: Player)
 	})
 end
 
-function CosmeticService.cleanup(_: Player)
+function CosmeticService.cleanup(player: Player)
+	_equipLimiter.cleanup(player.UserId)
 end
 
 return CosmeticService

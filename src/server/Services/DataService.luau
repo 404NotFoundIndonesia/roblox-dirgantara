@@ -21,12 +21,20 @@ local DataStoreService  = game:GetService("DataStoreService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService   = game:GetService("TeleportService")
 
-local Shared     = ReplicatedStorage:WaitForChild("Shared")
-local Types      = require(Shared.Types)
-local Constants  = require(Shared.Constants)
-local RetryAsync = require(Shared.RetryAsync)
+local Shared      = ReplicatedStorage:WaitForChild("Shared")
+local Packages    = ReplicatedStorage:WaitForChild("Packages")
+local Types       = require(Shared.Types)
+local Constants   = require(Shared.Constants)
+local RetryAsync  = require(Shared.RetryAsync)
+local RateLimiter = require(Shared.RateLimiter)
+local t           = require(Packages.t)
 
 local DataService = {}
+
+-- ─── Rate limiter + payload validator (T-123, T-125) ─────────────────────────
+
+local _uiScaleLimiter   = RateLimiter.new(3, 1)
+local _validateUIScale  = t.strictInterface({ scale = t.number })
 
 -- ─── BindableEvent ────────────────────────────────────────────────────────────
 
@@ -299,6 +307,7 @@ end
 
 function DataService.cleanup(player: Player)
 	local userId = player.UserId
+	_uiScaleLimiter.cleanup(userId)
 	stopAutoSave(userId)
 	DataService.save(player)
 	_cache[userId] = nil
@@ -369,9 +378,10 @@ end
 local _Remotes = require(Shared.Remotes)
 
 _Remotes.Settings_SetUIScale.OnServerEvent:Connect(function(player: Player, payload: any)
-	local scale = payload and payload.scale
-	if type(scale) ~= "number" then return end
-	scale = math.clamp(scale, Constants.UI_SCALE_MIN, Constants.UI_SCALE_MAX)
+	local userId = player.UserId
+	if not _uiScaleLimiter.check(userId) then return end
+	if not _validateUIScale(payload) then return end
+	local scale = math.clamp(payload.scale :: number, Constants.UI_SCALE_MIN, Constants.UI_SCALE_MAX)
 	local data = DataService.get(player)
 	if not data then return end
 	data.uiScale = scale

@@ -21,11 +21,14 @@ local CollectionService  = game:GetService("CollectionService")
 local MemoryStoreService = game:GetService("MemoryStoreService")
 local ReplicatedStorage  = game:GetService("ReplicatedStorage")
 
-local Shared     = ReplicatedStorage:WaitForChild("Shared")
-local Constants  = require(Shared.Constants)
-local SpiritDefs = require(Shared.SpiritDefs)
-local RealmDefs  = require(Shared.RealmDefs)
-local Remotes    = require(Shared.Remotes)
+local Shared      = ReplicatedStorage:WaitForChild("Shared")
+local Packages    = ReplicatedStorage:WaitForChild("Packages")
+local Constants   = require(Shared.Constants)
+local SpiritDefs  = require(Shared.SpiritDefs)
+local RealmDefs   = require(Shared.RealmDefs)
+local Remotes     = require(Shared.Remotes)
+local RateLimiter = require(Shared.RateLimiter)
+local t           = require(Packages.t)
 
 -- Lazy-require sibling services
 local _DataService:     any = nil
@@ -59,6 +62,18 @@ local function getCosmSvc(): any
 end
 
 local SpiritService = {}
+
+-- ─── Rate limiters + payload validators (T-123, T-125) ───────────────────────
+
+local _collectFragLimiter     = RateLimiter.new(5, 1)
+local _freeRequestLimiter     = RateLimiter.new(3, 1)
+local _touchDailyLimiter      = RateLimiter.new(3, 1)
+local _toggleCompanionLimiter = RateLimiter.new(3, 1)
+
+local _validateCollectFragment = t.strictInterface({ spiritId = t.string, fragmentIndex = t.number })
+local _validateFreeRequest     = t.strictInterface({ spiritId = t.string })
+local _validateTouchDaily      = t.strictInterface({ spiritId = t.string })
+local _validateToggleCompanion = t.strictInterface({ spiritId = t.string })
 
 -- ─── BindableEvents ───────────────────────────────────────────────────────────
 
@@ -113,9 +128,9 @@ local _dailyMemStore = MemoryStoreService:GetSortedMap("DailySpiritSpawnCache")
 -- ─── T-054: Daily spirit generation ──────────────────────────────────────────
 
 local function getUTC7DateString(): string
-	local utc7Offset = 7 * 3600
-	local t = os.time() + utc7Offset
-	local d = os.date("!*t", t) :: any
+	local utc7Offset  = 7 * 3600
+	local timestamp   = os.time() + utc7Offset
+	local d           = os.date("!*t", timestamp) :: any
 	return string.format("%04d%02d%02d", d.year, d.month, d.day)
 end
 
@@ -257,18 +272,12 @@ end
 
 Remotes.Spirit_CollectFragment.OnServerEvent:Connect(function(player: any, payload: any)
 	local userId = (player :: Player).UserId
-	if not _players[userId] then
-		return
-	end
-	if type(payload) ~= "table" then
-		return
-	end
+	if not _collectFragLimiter.check(userId) then return end
+	if not _validateCollectFragment(payload) then return end
+	if not _players[userId] then return end
 
-	local spiritId      = payload.spiritId
-	local fragmentIndex = payload.fragmentIndex
-	if type(spiritId) ~= "string" or type(fragmentIndex) ~= "number" then
-		return
-	end
+	local spiritId      = payload.spiritId :: string
+	local fragmentIndex = payload.fragmentIndex :: number
 
 	local def = SpiritDefs[spiritId]
 	if not def or type(def) ~= "table" then
@@ -324,17 +333,11 @@ end)
 
 Remotes.Spirit_FreeRequest.OnServerEvent:Connect(function(player: any, payload: any)
 	local userId = (player :: Player).UserId
-	if not _players[userId] then
-		return
-	end
-	if type(payload) ~= "table" then
-		return
-	end
+	if not _freeRequestLimiter.check(userId) then return end
+	if not _validateFreeRequest(payload) then return end
+	if not _players[userId] then return end
 
-	local spiritId = payload.spiritId
-	if type(spiritId) ~= "string" then
-		return
-	end
+	local spiritId = payload.spiritId :: string
 
 	local def = SpiritDefs[spiritId]
 	if not def or type(def) ~= "table" then
@@ -404,17 +407,11 @@ end)
 
 Remotes.Spirit_TouchDaily.OnServerEvent:Connect(function(player: any, payload: any)
 	local userId = (player :: Player).UserId
-	if not _players[userId] then
-		return
-	end
-	if type(payload) ~= "table" then
-		return
-	end
+	if not _touchDailyLimiter.check(userId) then return end
+	if not _validateTouchDaily(payload) then return end
+	if not _players[userId] then return end
 
-	local spiritId = payload.spiritId
-	if type(spiritId) ~= "string" then
-		return
-	end
+	local spiritId = payload.spiritId :: string
 
 	local daily = _dailySpiritData
 	if not daily then
@@ -479,17 +476,11 @@ end)
 
 Remotes.Spirit_ToggleCompanion.OnServerEvent:Connect(function(player: any, payload: any)
 	local userId = (player :: Player).UserId
-	if not _players[userId] then
-		return
-	end
-	if type(payload) ~= "table" then
-		return
-	end
+	if not _toggleCompanionLimiter.check(userId) then return end
+	if not _validateToggleCompanion(payload) then return end
+	if not _players[userId] then return end
 
-	local spiritId = payload.spiritId
-	if type(spiritId) ~= "string" then
-		return
-	end
+	local spiritId = payload.spiritId :: string
 
 	local data = getDS().get(player :: Player)
 	if not data then
@@ -567,6 +558,10 @@ end
 
 function SpiritService.cleanup(player: Player)
 	local userId = player.UserId
+	_collectFragLimiter.cleanup(userId)
+	_freeRequestLimiter.cleanup(userId)
+	_touchDailyLimiter.cleanup(userId)
+	_toggleCompanionLimiter.cleanup(userId)
 	_players[userId]            = nil
 	_collectedFragments[userId] = nil
 	_activeCompanion[userId]    = nil
